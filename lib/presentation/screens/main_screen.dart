@@ -24,11 +24,11 @@ class MainScreen extends ConsumerWidget {
 
     // Listen for refresh state changes
     ref.listen<CardsState>(cardsProvider, (previous, next) {
-      // Clear any existing snackbars first
-      ScaffoldMessenger.of(context).clearSnackBars();
+      print('>>> LISTENER: previous.error=${previous?.error}, next.error=${next.error}');
       
       // Show success snackbar when refresh succeeds
       if (next.lastRefreshSuccess && !previous!.lastRefreshSuccess) {
+        ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(l10n.balanceUpdated),
@@ -41,15 +41,20 @@ class MainScreen extends ConsumerWidget {
       
       // Show error snackbar when refresh fails
       if (next.error != null && next.error != previous?.error) {
+        print('>>> LISTENER: Showing error snackbar!');
+        ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(l10n.couldNotUpdateBalance),
             backgroundColor: Theme.of(context).colorScheme.error,
             behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 1),
+            duration: const Duration(seconds: 2),
           ),
         );
-        notifier.clearError();
+        // Clear error after a delay to avoid the snackbar being cleared
+        Future.delayed(const Duration(milliseconds: 100), () {
+          notifier.clearError();
+        });
       }
     });
 

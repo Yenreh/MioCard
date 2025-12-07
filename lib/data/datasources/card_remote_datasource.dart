@@ -8,10 +8,15 @@ class CardRemoteDatasource {
       'https://www.utryt.com.co/saldo/script/saldo.php';
 
   static const Map<String, String> _headers = {
+    'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0',
     'Accept': 'text/plain, */*; q=0.01',
+    'Accept-Language': 'en-US,en;q=0.5',
     'X-Requested-With': 'XMLHttpRequest',
-    'User-Agent':
-        'Mozilla/5.0 (Android 16; Mobile; rv:68.0) Gecko/68.0 Firefox/145.0',
+    'Connection': 'keep-alive',
+    'Referer': 'https://www.utryt.com.co/saldo/',
+    'Sec-Fetch-Dest': 'empty',
+    'Sec-Fetch-Mode': 'cors',
+    'Sec-Fetch-Site': 'same-origin',
   };
 
   final http.Client _client;
@@ -31,6 +36,9 @@ class CardRemoteDatasource {
       final body = response.body;
       final contentType = response.headers['content-type'] ?? '';
 
+      // Debug log
+      print('API Response - Status: ${response.statusCode}, Body: $body');
+
       if (response.statusCode != 200) {
         throw ApiException(
           message: 'Server error: ${response.statusCode}',
@@ -42,11 +50,30 @@ class CardRemoteDatasource {
       if (contentType.contains('application/json') ||
           body.trim().startsWith('{')) {
         final jsonData = json.decode(body) as Map<String, dynamic>;
+        
+        print('Parsed JSON: $jsonData, isEmpty: ${jsonData.isEmpty}');
+        
+        // Check if the response is empty or missing required fields
+        if (jsonData.isEmpty || !jsonData.containsKey('balance')) {
+          print('Throwing error - empty or missing balance');
+          throw const ApiException(
+            message: 'Error fetching card data',
+          );
+        }
+        
         return CardBalanceResponse.fromJson(jsonData);
       }
 
       // Otherwise treat as text/HTML and extract the balance
       final extractedBalance = _extractBalanceFromText(body);
+      
+      // If we couldn't extract a balance, throw an error
+      if (extractedBalance == null) {
+        throw const ApiException(
+          message: 'Error fetching card data',
+        );
+      }
+      
       return CardBalanceResponse.fromText(
         cardId: cardId,
         raw: body,

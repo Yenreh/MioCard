@@ -51,10 +51,12 @@ class CardsState {
     bool clearRefreshing = false,
     bool clearCardToDelete = false,
   }) {
+    final newError = clearError ? null : (error ?? this.error);
+    print('>>> copyWith called - clearError: $clearError, error param: $error, this.error: ${this.error}, newError: $newError');
     return CardsState(
       cards: cards ?? this.cards,
       isLoading: isLoading ?? this.isLoading,
-      error: clearError ? null : (error ?? this.error),
+      error: newError,
       refreshingCardId:
           clearRefreshing ? null : (refreshingCardId ?? this.refreshingCardId),
       cardToDelete:
@@ -130,21 +132,36 @@ class CardsNotifier extends Notifier<CardsState> {
 
   /// Refresh card balance from API
   Future<void> refreshCardBalance(String cardId) async {
+    print('>>> refreshCardBalance called for cardId: $cardId');
+    
     // Find the card to get full entity with prefix/suffix
     final card = state.cards.firstWhere(
       (c) => c.id == cardId,
       orElse: () => throw Exception('Card not found'),
     );
 
-    state = state.copyWith(refreshingCardId: cardId, lastRefreshSuccess: false);
+    print('>>> Found card: ${card.prefix}${card.id}${card.suffix}');
+
+    state = state.copyWith(
+      refreshingCardId: cardId,
+      lastRefreshSuccess: false,
+      clearError: true,
+    );
     try {
+      print('>>> Calling repository.refreshCardBalance...');
       final balance = await _repository.refreshCardBalance(card);
+      print('>>> Got balance: ${balance.balance}');
       await _repository.updateCardBalance(
           cardId, balance.balance, balance.balanceDate);
       await loadCards();
       state = state.copyWith(lastRefreshSuccess: true, clearRefreshing: true);
+      print('>>> Success!');
     } catch (e) {
-      state = state.copyWith(error: e.toString(), clearRefreshing: true);
+      print('>>> ERROR caught: $e');
+      final errorMsg = e.toString();
+      print('>>> Error message: $errorMsg');
+      state = state.copyWith(error: errorMsg, clearRefreshing: true);
+      print('>>> State error set to: ${state.error}');
     }
   }
 
