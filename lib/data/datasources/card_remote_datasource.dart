@@ -36,9 +36,6 @@ class CardRemoteDatasource {
       final body = response.body;
       final contentType = response.headers['content-type'] ?? '';
 
-      // Debug log
-      print('API Response - Status: ${response.statusCode}, Body: $body');
-
       if (response.statusCode != 200) {
         throw ApiException(
           message: 'Server error: ${response.statusCode}',
@@ -51,11 +48,8 @@ class CardRemoteDatasource {
           body.trim().startsWith('{')) {
         final jsonData = json.decode(body) as Map<String, dynamic>;
         
-        print('Parsed JSON: $jsonData, isEmpty: ${jsonData.isEmpty}');
-        
         // Check if the response is empty or missing required fields
         if (jsonData.isEmpty || !jsonData.containsKey('balance')) {
-          print('Throwing error - empty or missing balance');
           throw const ApiException(
             message: 'Error fetching card data',
           );

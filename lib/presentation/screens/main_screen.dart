@@ -24,8 +24,6 @@ class MainScreen extends ConsumerWidget {
 
     // Listen for refresh state changes
     ref.listen<CardsState>(cardsProvider, (previous, next) {
-      print('>>> LISTENER: previous.error=${previous?.error}, next.error=${next.error}');
-      
       // Show success snackbar when refresh succeeds
       if (next.lastRefreshSuccess && !previous!.lastRefreshSuccess) {
         ScaffoldMessenger.of(context).clearSnackBars();
@@ -41,7 +39,6 @@ class MainScreen extends ConsumerWidget {
       
       // Show error snackbar when refresh fails
       if (next.error != null && next.error != previous?.error) {
-        print('>>> LISTENER: Showing error snackbar!');
         ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
