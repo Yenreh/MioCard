@@ -1,0 +1,59 @@
+name: miocard
+description: MIOCard - Transport Card Manager. A modern Flutter app for managing transport cards.
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.0.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # State Management
+  flutter_riverpod: ^3.0.3
+
+  # Database
+  sqflite: ^2.3.2
+  path: ^1.8.3
+
+  # Networking
+  http: ^1.2.0
+
+  # Utils
+  uuid: ^4.3.3
+  intl: ^0.20.2
+  share_plus: ^12.0.1
+  file_picker: ^10.3.7
+  path_provider: ^2.1.2
+
+  # UI
+  google_fonts: ^6.1.0
+
+  # Navigation
+  go_router: ^17.0.0
+
+  # Icons
+  cupertino_icons: ^1.0.6
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "android/app/src/main/ic_launcher-playstore.png"
+  adaptive_icon_foreground: "android/app/src/main/res/mipmap-xxxhdpi/ic_launcher_foreground.webp"
+  adaptive_icon_background: "#FFFFFF"
+
+flutter:
+  uses-material-design: true
+  generate: true
+
+  assets:
+    - assets/images/

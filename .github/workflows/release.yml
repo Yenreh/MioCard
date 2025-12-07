@@ -1,0 +1,73 @@
+name: Build and Release APK
+
+on:
+  push:
+    paths:
+      - 'VERSION'
+    branches:
+      - main
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Read version
+        id: version
+        run: |
+          VERSION=$(cat VERSION | tr -d '\n\r ')
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "Version: $VERSION"
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Update pubspec version
+        run: |
+          VERSION=${{ steps.version.outputs.version }}
+          sed -i "s/^version: .*/version: $VERSION+${{ github.run_number }}/" pubspec.yaml
+
+      - name: Build APK
+        run: flutter build apk --release
+
+      - name: Rename APK
+        run: |
+          mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/MIOCard-v${{ steps.version.outputs.version }}.apk
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v${{ steps.version.outputs.version }}
+          name: MIOCard v${{ steps.version.outputs.version }}
+          body: |
+            ## MIOCard v${{ steps.version.outputs.version }}
+            
+            ### Changes
+            - See commit history for details
+            
+            ### Installation
+            1. Download the APK file below
+            2. Enable "Install from unknown sources" on your device
+            3. Install the APK
+          files: build/app/outputs/flutter-apk/MIOCard-v${{ steps.version.outputs.version }}.apk
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

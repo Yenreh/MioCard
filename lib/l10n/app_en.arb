@@ -1,0 +1,113 @@
+{
+  "@@locale": "en",
+  "appName": "MIOCard",
+  "addCard": "Add card",
+  "noCardsMessage": "You don't have any saved cards.\nAdd your first card to get started.",
+  "createFirstCard": "Create first card",
+  "refresh": "Refresh",
+  "balance": "Balance",
+  "balanceUnknown": "Unknown",
+  "lastUpdate": "Last update",
+  "neverUpdated": "Never updated",
+  "createCardTitle": "Create New Card",
+  "back": "Back",
+  "cardIdLabel": "Card ID *",
+  "cardIdPlaceholder": "Enter card ID",
+  "cardPrefixLabel": "Prefix",
+  "cardPrefixPlaceholder": "Optional prefix",
+  "cardSuffixLabel": "Suffix",
+  "cardSuffixPlaceholder": "Optional suffix",
+  "cardNameLabel": "Name *",
+  "cardNamePlaceholder": "Card name",
+  "cardPositionLabel": "Position",
+  "cardPositionPlaceholder": "Display position",
+  "createCardButton": "Create Card",
+  "creatingCard": "Creating...",
+  "idRequired": "ID is required",
+  "nameRequired": "Name is required",
+  "errorNetwork": "Network error. Check your internet connection.",
+  "errorUnknown": "An unknown error occurred",
+  "errorApi": "Server error. Please try again later.",
+  "editCard": "Edit card",
+  "deleteCard": "Delete card",
+  "editCardTitle": "Edit Card",
+  "saveChanges": "Save Changes",
+  "savingCard": "Saving...",
+  "deleteCardTitle": "Delete Card",
+  "deleteCardMessage": "Are you sure you want to delete \"{cardName}\"? This action cannot be undone.",
+  "@deleteCardMessage": {
+    "placeholders": {
+      "cardName": {
+        "type": "String"
+      }
+    }
+  },
+  "delete": "Delete",
+  "cancel": "Cancel",
+  "deletingCard": "Deleting...",
+  "manageCards": "Manage your transport cards",
+  "newCard": "New card",
+  "noCards": "No cards",
+  "settings": "Settings",
+  "appearance": "Appearance",
+  "themeSystem": "System",
+  "themeSystemDesc": "Follow device settings",
+  "themeLight": "Light",
+  "themeLightDesc": "Light theme",
+  "themeDark": "Dark",
+  "themeDarkDesc": "Dark theme",
+  "fare": "Fare",
+  "farePrice": "Fare price",
+  "farePriceDesc": "Used to calculate how many fares your balance covers",
+  "data": "Data",
+  "exportCards": "Export cards",
+  "exportCardsDesc": "Save backup copy",
+  "importCards": "Import cards",
+  "importCardsDesc": "Restore from file",
+  "about": "About",
+  "version": "Version",
+  "noCardsToExport": "No cards to export",
+  "importError": "Import error",
+  "importedCards": "{count} card{count, plural, =1{} other{s}} imported",
+  "@importedCards": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noNewCardsImported": "No new cards imported",
+  "couldNotUpdateBalance": "Could not update balance",
+  "name": "NAME",
+  "fares": "{count} fare{count, plural, =1{} other{s}}",
+  "@fares": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "updatedAgo": "Updated {time}",
+  "@updatedAgo": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "updatedAt": "Updated: {datetime}",
+  "@updatedAt": {
+    "placeholders": {
+      "datetime": {
+        "type": "String"
+      }
+    }
+  },
+  "updateBalance": "Update balance",
+  "edit": "Edit",
+  "cardIdExists": "A card with this ID already exists",
+  "createCardError": "Error creating card",
+  "saveChangesError": "Error saving changes",
+  "farePriceUpdated": "Fare price updated",
+  "balanceUpdated": "Balance updated"
+}

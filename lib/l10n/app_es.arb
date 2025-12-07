@@ -1,0 +1,113 @@
+{
+  "@@locale": "es",
+  "appName": "MIOCard",
+  "addCard": "Agregar tarjeta",
+  "noCardsMessage": "No tienes tarjetas guardadas.\nAgrega tu primera tarjeta para comenzar.",
+  "createFirstCard": "Crear primera tarjeta",
+  "refresh": "Actualizar",
+  "balance": "Saldo",
+  "balanceUnknown": "Desconocido",
+  "lastUpdate": "Ultima actualizacion",
+  "neverUpdated": "Nunca actualizado",
+  "createCardTitle": "Crear Nueva Tarjeta",
+  "back": "Atras",
+  "cardIdLabel": "ID de Tarjeta *",
+  "cardIdPlaceholder": "Ingresa el ID de la tarjeta",
+  "cardPrefixLabel": "Prefijo",
+  "cardPrefixPlaceholder": "Prefijo opcional",
+  "cardSuffixLabel": "Sufijo",
+  "cardSuffixPlaceholder": "Sufijo opcional",
+  "cardNameLabel": "Nombre *",
+  "cardNamePlaceholder": "Nombre de la tarjeta",
+  "cardPositionLabel": "Posicion",
+  "cardPositionPlaceholder": "Posicion de visualizacion",
+  "createCardButton": "Crear Tarjeta",
+  "creatingCard": "Creando...",
+  "idRequired": "El ID es obligatorio",
+  "nameRequired": "El nombre es obligatorio",
+  "errorNetwork": "Error de conexion. Verifica tu internet.",
+  "errorUnknown": "Ha ocurrido un error desconocido",
+  "errorApi": "Error del servidor. Intentalo mas tarde.",
+  "editCard": "Editar tarjeta",
+  "deleteCard": "Eliminar tarjeta",
+  "editCardTitle": "Editar Tarjeta",
+  "saveChanges": "Guardar Cambios",
+  "savingCard": "Guardando...",
+  "deleteCardTitle": "Eliminar Tarjeta",
+  "deleteCardMessage": "Estas seguro de que quieres eliminar \"{cardName}\"? Esta accion no se puede deshacer.",
+  "@deleteCardMessage": {
+    "placeholders": {
+      "cardName": {
+        "type": "String"
+      }
+    }
+  },
+  "delete": "Eliminar",
+  "cancel": "Cancelar",
+  "deletingCard": "Eliminando...",
+  "manageCards": "Gestiona tus tarjetas de transporte",
+  "newCard": "Nueva tarjeta",
+  "noCards": "Sin tarjetas",
+  "settings": "Configuracion",
+  "appearance": "Apariencia",
+  "themeSystem": "Sistema",
+  "themeSystemDesc": "Seguir configuracion del dispositivo",
+  "themeLight": "Claro",
+  "themeLightDesc": "Tema claro",
+  "themeDark": "Oscuro",
+  "themeDarkDesc": "Tema oscuro",
+  "fare": "Pasaje",
+  "farePrice": "Valor del pasaje",
+  "farePriceDesc": "Se usa para calcular cuantos pasajes te alcanza el saldo",
+  "data": "Datos",
+  "exportCards": "Exportar tarjetas",
+  "exportCardsDesc": "Guardar copia de seguridad",
+  "importCards": "Importar tarjetas",
+  "importCardsDesc": "Restaurar desde archivo",
+  "about": "Acerca de",
+  "version": "Version",
+  "noCardsToExport": "No hay tarjetas para exportar",
+  "importError": "Error al importar",
+  "importedCards": "{count} tarjeta{count, plural, =1{} other{s}} importada{count, plural, =1{} other{s}}",
+  "@importedCards": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "noNewCardsImported": "No se importaron tarjetas nuevas",
+  "couldNotUpdateBalance": "No se pudo actualizar el saldo",
+  "name": "NOMBRE",
+  "fares": "{count} pasaje{count, plural, =1{} other{s}}",
+  "@fares": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "updatedAgo": "Actualizado {time}",
+  "@updatedAgo": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "updatedAt": "Actualizado: {datetime}",
+  "@updatedAt": {
+    "placeholders": {
+      "datetime": {
+        "type": "String"
+      }
+    }
+  },
+  "updateBalance": "Actualizar saldo",
+  "edit": "Editar",
+  "cardIdExists": "Ya existe una tarjeta con este ID",
+  "createCardError": "Error al crear la tarjeta",
+  "saveChangesError": "Error al guardar los cambios",
+  "farePriceUpdated": "Valor del pasaje actualizado",
+  "balanceUpdated": "Saldo actualizado"
+}
