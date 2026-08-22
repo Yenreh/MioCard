@@ -8,6 +8,7 @@ import '../../l10n/app_localizations.dart';
 class CardItemWidget extends StatelessWidget {
   final CardEntity card;
   final bool isRefreshing;
+  final bool refreshFailed;
   final int farePrice;
   final VoidCallback onRefreshClick;
   final VoidCallback onEditClick;
@@ -17,6 +18,7 @@ class CardItemWidget extends StatelessWidget {
     super.key,
     required this.card,
     required this.isRefreshing,
+    this.refreshFailed = false,
     required this.farePrice,
     required this.onRefreshClick,
     required this.onEditClick,
@@ -246,6 +248,32 @@ class CardItemWidget extends StatelessWidget {
                     ),
                   ],
                 ),
+
+                // Stale notice when the last refresh failed and we only
+                // have a previously stored balance
+                if (refreshFailed && card.balance != null) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.cloud_off_rounded,
+                        color: Color(0xFFFFD54F),
+                        size: 12,
+                      ),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          l10n.staleBalanceNotice,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: const Color(0xFFFFD54F),
+                            fontSize: 10,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
 
                 // Last update text
                 if (card.lastUpdate != null) ...[

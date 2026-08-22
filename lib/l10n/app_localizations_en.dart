@@ -256,4 +256,30 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get balanceUpdated => 'Balance updated';
+
+  @override
+  String get retry => 'Retry';
+
+  @override
+  String get networkErrorMessage =>
+      'No connection. Check your internet and try again.';
+
+  @override
+  String get serverErrorMessage =>
+      'Balance service is unavailable. Try again later.';
+
+  @override
+  String get cardNotFoundMessage =>
+      'No balance information found for this card.';
+
+  @override
+  String get rateLimitMessage =>
+      'Service query limit reached. Wait a few minutes and try again.';
+
+  @override
+  String get invalidCardMessage =>
+      'Invalid card number. It must have exactly 13 digits.';
+
+  @override
+  String get staleBalanceNotice => 'Last known balance';
 }

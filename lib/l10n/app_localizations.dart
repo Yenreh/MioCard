@@ -547,6 +547,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Balance updated'**
   String get balanceUpdated;
+
+  /// No description provided for @retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retry;
+
+  /// No description provided for @networkErrorMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No connection. Check your internet and try again.'**
+  String get networkErrorMessage;
+
+  /// No description provided for @serverErrorMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance service is unavailable. Try again later.'**
+  String get serverErrorMessage;
+
+  /// No description provided for @cardNotFoundMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No balance information found for this card.'**
+  String get cardNotFoundMessage;
+
+  /// No description provided for @rateLimitMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Service query limit reached. Wait a few minutes and try again.'**
+  String get rateLimitMessage;
+
+  /// No description provided for @invalidCardMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid card number. It must have exactly 13 digits.'**
+  String get invalidCardMessage;
+
+  /// No description provided for @staleBalanceNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Last known balance'**
+  String get staleBalanceNotice;
 }
 
 class _AppLocalizationsDelegate

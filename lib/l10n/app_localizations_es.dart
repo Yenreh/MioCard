@@ -262,4 +262,30 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get balanceUpdated => 'Saldo actualizado';
+
+  @override
+  String get retry => 'Reintentar';
+
+  @override
+  String get networkErrorMessage =>
+      'Sin conexión. Revisa tu internet e inténtalo de nuevo.';
+
+  @override
+  String get serverErrorMessage =>
+      'El servicio de saldos no está disponible. Intenta más tarde.';
+
+  @override
+  String get cardNotFoundMessage =>
+      'No se encontró información de saldo para esta tarjeta.';
+
+  @override
+  String get rateLimitMessage =>
+      'Límite de consultas del servicio alcanzado. Espera unos minutos e inténtalo de nuevo.';
+
+  @override
+  String get invalidCardMessage =>
+      'Número de tarjeta inválido. Debe tener exactamente 13 dígitos.';
+
+  @override
+  String get staleBalanceNotice => 'Último saldo conocido';
 }

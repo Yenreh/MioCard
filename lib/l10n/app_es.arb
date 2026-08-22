@@ -109,5 +109,12 @@
   "createCardError": "Error al crear la tarjeta",
   "saveChangesError": "Error al guardar los cambios",
   "farePriceUpdated": "Valor del pasaje actualizado",
-  "balanceUpdated": "Saldo actualizado"
+  "balanceUpdated": "Saldo actualizado",
+  "retry": "Reintentar",
+  "networkErrorMessage": "Sin conexión. Revisa tu internet e inténtalo de nuevo.",
+  "serverErrorMessage": "El servicio de saldos no está disponible. Intenta más tarde.",
+  "cardNotFoundMessage": "No se encontró información de saldo para esta tarjeta.",
+  "rateLimitMessage": "Límite de consultas del servicio alcanzado. Espera unos minutos e inténtalo de nuevo.",
+  "invalidCardMessage": "Número de tarjeta inválido. Debe tener exactamente 13 dígitos.",
+  "staleBalanceNotice": "Último saldo conocido"
 }

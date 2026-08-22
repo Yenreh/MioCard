@@ -109,5 +109,12 @@
   "createCardError": "Error creating card",
   "saveChangesError": "Error saving changes",
   "farePriceUpdated": "Fare price updated",
-  "balanceUpdated": "Balance updated"
+  "balanceUpdated": "Balance updated",
+  "retry": "Retry",
+  "networkErrorMessage": "No connection. Check your internet and try again.",
+  "serverErrorMessage": "Balance service is unavailable. Try again later.",
+  "cardNotFoundMessage": "No balance information found for this card.",
+  "rateLimitMessage": "Service query limit reached. Wait a few minutes and try again.",
+  "invalidCardMessage": "Invalid card number. It must have exactly 13 digits.",
+  "staleBalanceNotice": "Last known balance"
 }

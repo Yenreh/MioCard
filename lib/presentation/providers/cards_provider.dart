@@ -8,6 +8,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../domain/entities/card_entity.dart';
+import '../../data/datasources/card_remote_datasource.dart';
 import '../../data/repositories/card_repository_impl.dart';
 import '../../domain/repositories/card_repository.dart';
 
@@ -22,6 +23,8 @@ class CardsState {
   final bool isLoading;
   final String? error;
   final String? refreshingCardId;
+  final ApiException? refreshError;
+  final String? refreshFailedCardId;
   final CardEntity? cardToDelete;
   final bool showDeleteDialog;
   final bool isDeletingCard;
@@ -32,6 +35,8 @@ class CardsState {
     this.isLoading = false,
     this.error,
     this.refreshingCardId,
+    this.refreshError,
+    this.refreshFailedCardId,
     this.cardToDelete,
     this.showDeleteDialog = false,
     this.isDeletingCard = false,
@@ -43,12 +48,15 @@ class CardsState {
     bool? isLoading,
     String? error,
     String? refreshingCardId,
+    ApiException? refreshError,
+    String? refreshFailedCardId,
     CardEntity? cardToDelete,
     bool? showDeleteDialog,
     bool? isDeletingCard,
     bool? lastRefreshSuccess,
     bool clearError = false,
     bool clearRefreshing = false,
+    bool clearRefreshError = false,
     bool clearCardToDelete = false,
   }) {
     return CardsState(
@@ -57,6 +65,11 @@ class CardsState {
       error: clearError ? null : (error ?? this.error),
       refreshingCardId:
           clearRefreshing ? null : (refreshingCardId ?? this.refreshingCardId),
+      refreshError:
+          clearRefreshError ? null : (refreshError ?? this.refreshError),
+      refreshFailedCardId: clearRefreshError
+          ? null
+          : (refreshFailedCardId ?? this.refreshFailedCardId),
       cardToDelete:
           clearCardToDelete ? null : (cardToDelete ?? this.cardToDelete),
       showDeleteDialog: showDeleteDialog ?? this.showDeleteDialog,
@@ -130,16 +143,22 @@ class CardsNotifier extends Notifier<CardsState> {
 
   /// Refresh card balance from API
   Future<void> refreshCardBalance(String cardId) async {
+    // Only one refresh at a time
+    if (state.refreshingCardId != null) return;
+
     // Find the card to get full entity with prefix/suffix
-    final card = state.cards.firstWhere(
-      (c) => c.id == cardId,
-      orElse: () => throw Exception('Card not found'),
-    );
+    final CardEntity card;
+    try {
+      card = state.cards.firstWhere((c) => c.id == cardId);
+    } catch (_) {
+      return; // Card no longer exists
+    }
 
     state = state.copyWith(
       refreshingCardId: cardId,
       lastRefreshSuccess: false,
       clearError: true,
+      clearRefreshError: true,
     );
     try {
       final balance = await _repository.refreshCardBalance(card);
@@ -147,9 +166,22 @@ class CardsNotifier extends Notifier<CardsState> {
           cardId, balance.balance, balance.balanceDate);
       await loadCards();
       state = state.copyWith(lastRefreshSuccess: true, clearRefreshing: true);
+    } on ApiException catch (e) {
+      // Keep the last known balance; flag the card as failed so the UI
+      // can show the stale data notice and a typed error message.
+      state = state.copyWith(
+        refreshError: e,
+        refreshFailedCardId: cardId,
+        clearRefreshing: true,
+      );
     } catch (e) {
       state = state.copyWith(error: e.toString(), clearRefreshing: true);
     }
+  }
+
+  /// Clear the last refresh error and failed card flag
+  void clearRefreshError() {
+    state = state.copyWith(clearRefreshError: true);
   }
 
   /// Show delete confirmation dialog

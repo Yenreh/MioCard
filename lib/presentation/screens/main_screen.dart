@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../domain/entities/card_entity.dart';
+import '../../data/datasources/card_remote_datasource.dart';
 import '../../l10n/app_localizations.dart';
 import '../providers/cards_provider.dart';
 import '../providers/settings_provider.dart';
@@ -36,8 +37,35 @@ class MainScreen extends ConsumerWidget {
           ),
         );
       }
-      
-      // Show error snackbar when refresh fails
+
+      // Show typed error snackbar with retry action when refresh fails
+      if (next.refreshError != null &&
+          next.refreshError != previous?.refreshError) {
+        final failedCardId = next.refreshFailedCardId;
+        ScaffoldMessenger.of(context).clearSnackBars();
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_refreshErrorMessage(next.refreshError!, l10n)),
+            backgroundColor: Theme.of(context).colorScheme.error,
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 4),
+            action: failedCardId != null
+                ? SnackBarAction(
+                    label: l10n.retry,
+                    textColor: Colors.white,
+                    onPressed: () =>
+                        notifier.refreshCardBalance(failedCardId),
+                  )
+                : null,
+          ),
+        );
+        // Clear error after a delay to avoid the snackbar being cleared
+        Future.delayed(const Duration(milliseconds: 100), () {
+          notifier.clearRefreshError();
+        });
+      }
+
+      // Show error snackbar for non-refresh errors
       if (next.error != null && next.error != previous?.error) {
         ScaffoldMessenger.of(context).clearSnackBars();
         ScaffoldMessenger.of(context).showSnackBar(
@@ -126,6 +154,7 @@ class MainScreen extends ConsumerWidget {
                       child: CardItemWidget(
                         card: card,
                         isRefreshing: state.refreshingCardId == card.id,
+                        refreshFailed: state.refreshFailedCardId == card.id,
                         farePrice: settings.farePrice,
                         onRefreshClick: () =>
                             notifier.refreshCardBalance(card.id),
@@ -145,6 +174,18 @@ class MainScreen extends ConsumerWidget {
         child: const Icon(Icons.add_rounded),
       ),
     );
+  }
+
+  /// Map a typed API error to a user-friendly localized message
+  String _refreshErrorMessage(ApiException error, AppLocalizations l10n) {
+    return switch (error) {
+      NetworkApiException() => l10n.networkErrorMessage,
+      ServerApiException() => l10n.serverErrorMessage,
+      InvalidCardApiException() => l10n.invalidCardMessage,
+      CardNotFoundApiException() => l10n.cardNotFoundMessage,
+      RateLimitApiException() => l10n.rateLimitMessage,
+      _ => l10n.couldNotUpdateBalance,
+    };
   }
 
   void _showDeleteDialog(

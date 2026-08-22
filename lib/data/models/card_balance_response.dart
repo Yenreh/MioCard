@@ -14,30 +14,29 @@ class CardBalanceResponse {
     this.raw,
   });
 
-  /// Parse from API JSON response
+  /// Parse from API JSON response.
+  ///
+  /// Expects a payload already validated by the datasource:
+  /// numeric `balance` and `cardNumber` > 0.
   factory CardBalanceResponse.fromJson(Map<String, dynamic> json) {
     return CardBalanceResponse(
-      balance: (json['balance'] as num?)?.toDouble() ?? 0.0,
-      cardNumber: json['cardNumber']?.toString() ?? '',
-      balanceDate: json['balanceDate'] != null
-          ? DateTime.tryParse(json['balanceDate'] as String) ?? DateTime.now()
-          : DateTime.now(),
+      balance: (json['balance'] as num).toDouble(),
+      cardNumber: json['cardNumber'].toString(),
+      balanceDate: _parseDate(json['balanceDate']),
       raw: json.toString(),
     );
   }
 
-  /// Create from extracted text/HTML response
-  factory CardBalanceResponse.fromText({
-    required String cardId,
-    required String raw,
-    double? balance,
-  }) {
-    return CardBalanceResponse(
-      balance: balance ?? 0.0,
-      cardNumber: cardId,
-      balanceDate: DateTime.now(),
-      raw: raw,
-    );
+  /// Parse the balance date, which arrives as epoch milliseconds from the
+  /// Metrocali proxy and as a date string from the utryt endpoint.
+  static DateTime _parseDate(dynamic value) {
+    if (value is num) {
+      return DateTime.fromMillisecondsSinceEpoch(value.toInt());
+    }
+    if (value is String) {
+      return DateTime.tryParse(value) ?? DateTime.now();
+    }
+    return DateTime.now();
   }
 
   /// Convert to domain entity
