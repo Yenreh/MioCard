@@ -1,3 +1,6 @@
+import 'dart:async';
+import 'dart:ui' as ui;
+
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -30,14 +33,25 @@ class _MapStopsScreenState extends ConsumerState<MapStopsScreen> {
   bool _locating = false;
   double _rotation = 0;
 
+  StreamSubscription<MapEvent>? _events;
+
   @override
   void initState() {
     super.initState();
     _centreOnDevice();
+    // Rotation is only reported through the event stream, so the needle
+    // follows the map as it turns instead of jumping at the end.
+    _events = _mapController.mapEventStream.listen((event) {
+      final rotation = event.camera.rotation;
+      if (mounted && (rotation - _rotation).abs() > 0.1) {
+        setState(() => _rotation = rotation);
+      }
+    });
   }
 
   @override
   void dispose() {
+    _events?.cancel();
     _mapController.dispose();
     super.dispose();
   }
@@ -142,11 +156,6 @@ class _MapStopsScreenState extends ConsumerState<MapStopsScreen> {
                   minZoom: 11,
                   maxZoom: 18,
                   onMapReady: () => _mapReady = true,
-                  onPositionChanged: (camera, _) {
-                    if (camera.rotation != _rotation) {
-                      setState(() => _rotation = camera.rotation);
-                    }
-                  },
                 ),
                 children: [
                   TileLayer(
@@ -187,10 +196,7 @@ class _MapStopsScreenState extends ConsumerState<MapStopsScreen> {
                   child: IconButton.filled(
                     onPressed: () => _mapController.rotate(0),
                     tooltip: l10n.resetNorth,
-                    icon: Transform.rotate(
-                      angle: _rotation * pi / 180,
-                      child: const Icon(Icons.navigation_rounded),
-                    ),
+                    icon: _CompassNeedle(rotationDegrees: _rotation),
                   ),
                 ),
               // Compact and centred, so it hides as little map as
@@ -286,4 +292,62 @@ class _MapStopsScreenState extends ConsumerState<MapStopsScreen> {
       ],
     );
   }
+}
+
+/// Diamond whose coloured half points at true north
+class _CompassNeedle extends StatelessWidget {
+  final double rotationDegrees;
+
+  const _CompassNeedle({required this.rotationDegrees});
+
+  @override
+  Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return Transform.rotate(
+      angle: rotationDegrees * pi / 180,
+      child: CustomPaint(
+        size: const Size(16, 22),
+        painter: _CompassPainter(
+          north: colorScheme.error,
+          south: colorScheme.onPrimary.withValues(alpha: 0.7),
+        ),
+      ),
+    );
+  }
+}
+
+class _CompassPainter extends CustomPainter {
+  final Color north;
+  final Color south;
+
+  const _CompassPainter({required this.north, required this.south});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final middleY = size.height / 2;
+    final centreX = size.width / 2;
+    final paint = Paint()..style = PaintingStyle.fill;
+
+    canvas.drawPath(
+      ui.Path()
+        ..moveTo(centreX, 0)
+        ..lineTo(size.width, middleY)
+        ..lineTo(0, middleY)
+        ..close(),
+      paint..color = north,
+    );
+    canvas.drawPath(
+      ui.Path()
+        ..moveTo(centreX, size.height)
+        ..lineTo(size.width, middleY)
+        ..lineTo(0, middleY)
+        ..close(),
+      paint..color = south,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_CompassPainter oldDelegate) =>
+      oldDelegate.north != north || oldDelegate.south != south;
 }
