@@ -242,4 +242,33 @@ void main() {
       );
     });
   });
+  group('FavoriteStop naming', () {
+    const stop = FavoriteStop(
+      id: '500800',
+      stopId: '500800',
+      name: 'Plaza de Cayzedo A1',
+      anchorLatitude: 3.4516,
+      anchorLongitude: -76.532,
+    );
+
+    test('shows the real name when there is no custom one', () {
+      expect(stop.displayName, 'Plaza de Cayzedo A1');
+      expect(stop.secondaryName, isNull);
+    });
+
+    test('shows the custom name with the real one behind it', () {
+      final renamed = stop.copyWith(customName: 'Trabajo');
+
+      expect(renamed.displayName, 'Trabajo');
+      expect(renamed.secondaryName, 'Plaza de Cayzedo A1');
+    });
+
+    test('falls back to the real name when the custom one is cleared', () {
+      final cleared =
+          stop.copyWith(customName: 'Trabajo').copyWith(clearCustomName: true);
+
+      expect(cleared.displayName, 'Plaza de Cayzedo A1');
+      expect(cleared.secondaryName, isNull);
+    });
+  });
 }

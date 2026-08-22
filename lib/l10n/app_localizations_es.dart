@@ -401,4 +401,13 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get seeAll => 'Ver todas';
+
+  @override
+  String get editStop => 'Renombrar parada';
+
+  @override
+  String get customNameLabel => 'Nombre personalizado';
+
+  @override
+  String get customNameHint => 'Déjalo vacío para usar el nombre real';
 }

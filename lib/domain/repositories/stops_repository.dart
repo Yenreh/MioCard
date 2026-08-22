@@ -11,6 +11,9 @@ abstract class StopsRepository {
   /// Remove a saved stop
   Future<void> removeFavorite(String stopId);
 
+  /// Save changes to a stop the user already keeps
+  Future<void> updateFavorite(FavoriteStop stop);
+
   /// Position to assign to the next saved stop
   Future<int> nextPosition();
 

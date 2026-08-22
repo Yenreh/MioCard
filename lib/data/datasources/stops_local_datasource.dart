@@ -16,6 +16,16 @@ class StopsLocalDatasource {
     await db.insert(_tableName, _toRow(stop));
   }
 
+  Future<void> update(FavoriteStop stop) async {
+    final db = await AppDatabase.instance;
+    await db.update(
+      _tableName,
+      _toRow(stop),
+      where: 'stop_id = ?',
+      whereArgs: [stop.id],
+    );
+  }
+
   Future<void> delete(String stopId) async {
     final db = await AppDatabase.instance;
     await db.delete(_tableName, where: 'stop_id = ?', whereArgs: [stopId]);
@@ -48,6 +58,7 @@ class StopsLocalDatasource {
       anchorLongitude: (row['anchor_longitude'] as num).toDouble(),
       position: (row['position'] as num?)?.toInt() ?? 0,
       stopId: row['stop_ref'] as String?,
+      customName: row['custom_name'] as String?,
     );
   }
 
@@ -59,6 +70,7 @@ class StopsLocalDatasource {
       'anchor_longitude': stop.anchorLongitude,
       'position': stop.position,
       'stop_ref': stop.stopId,
+      'custom_name': stop.customName,
     };
   }
 }

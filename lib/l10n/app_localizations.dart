@@ -799,6 +799,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'See all'**
   String get seeAll;
+
+  /// No description provided for @editStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename stop'**
+  String get editStop;
+
+  /// No description provided for @customNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom name'**
+  String get customNameLabel;
+
+  /// No description provided for @customNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave it empty to use the real name'**
+  String get customNameHint;
 }
 
 class _AppLocalizationsDelegate

@@ -165,5 +165,8 @@
   "homeStopsOnly": "Favorite stops only",
   "homeBoth": "Cards and stops",
   "myCards": "My cards",
-  "seeAll": "See all"
+  "seeAll": "See all",
+  "editStop": "Rename stop",
+  "customNameLabel": "Custom name",
+  "customNameHint": "Leave it empty to use the real name"
 }

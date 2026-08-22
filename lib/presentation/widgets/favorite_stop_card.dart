@@ -11,12 +11,16 @@ class FavoriteStopCard extends StatelessWidget {
   /// Removing lives in the stops screen; null hides the action
   final VoidCallback? onRemove;
 
+  /// Renaming lives in the stops screen too; null hides the action
+  final VoidCallback? onRename;
+
   const FavoriteStopCard({
     super.key,
     required this.stop,
     required this.arrivals,
     required this.l10n,
     this.onRemove,
+    this.onRename,
   });
 
   @override
@@ -39,15 +43,36 @@ class FavoriteStopCard extends StatelessWidget {
               Icon(Icons.signpost_rounded, size: 18, color: colorScheme.primary),
               const SizedBox(width: 8),
               Expanded(
-                child: Text(
-                  stop.name,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      stop.displayName,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    if (stop.secondaryName != null)
+                      Text(
+                        stop.secondaryName!,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: colorScheme.onSurfaceVariant,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                  ],
                 ),
               ),
+              if (onRename != null)
+                IconButton(
+                  icon: const Icon(Icons.edit_rounded),
+                  color: colorScheme.onSurfaceVariant,
+                  tooltip: l10n.editStop,
+                  onPressed: onRename,
+                ),
               if (onRemove != null)
                 IconButton(
                   icon: const Icon(Icons.star_rounded),

@@ -393,4 +393,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get seeAll => 'See all';
+
+  @override
+  String get editStop => 'Rename stop';
+
+  @override
+  String get customNameLabel => 'Custom name';
+
+  @override
+  String get customNameHint => 'Leave it empty to use the real name';
 }

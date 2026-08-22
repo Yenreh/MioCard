@@ -182,6 +182,21 @@ class StopsNotifier extends Notifier<StopsState> {
     await loadFavorites();
   }
 
+  /// Give a stop a label of its own, or drop it when [customName] is empty
+  Future<void> renameFavorite(String id, String? customName) async {
+    final stop = state.favorites.where((s) => s.id == id).firstOrNull;
+    if (stop == null) return;
+
+    final trimmed = customName?.trim();
+    await _repository.updateFavorite(
+      stop.copyWith(
+        customName: trimmed,
+        clearCustomName: trimmed == null || trimmed.isEmpty,
+      ),
+    );
+    await loadFavorites();
+  }
+
   /// Remove a saved stop
   Future<void> removeFavorite(String stopId) async {
     await _repository.removeFavorite(stopId);

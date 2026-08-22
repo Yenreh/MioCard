@@ -66,7 +66,12 @@ class NearbyStop {
 /// brings the stop back from anywhere.
 class FavoriteStop {
   final String id;
+
+  /// Name the service reports for the stop
   final String name;
+
+  /// Label the user gave it, shown instead of the real name
+  final String? customName;
   final double anchorLatitude;
   final double anchorLongitude;
   final int position;
@@ -79,6 +84,7 @@ class FavoriteStop {
   const FavoriteStop({
     required this.id,
     required this.name,
+    this.customName,
     required this.anchorLatitude,
     required this.anchorLongitude,
     this.position = 0,
@@ -87,10 +93,23 @@ class FavoriteStop {
 
   bool get isArea => stopId == null;
 
-  FavoriteStop copyWith({String? name, int? position}) {
+  /// What to show as the title
+  String get displayName => customName?.isNotEmpty == true ? customName! : name;
+
+  /// The real name, only when a custom one is taking its place
+  String? get secondaryName =>
+      customName?.isNotEmpty == true ? name : null;
+
+  FavoriteStop copyWith({
+    String? name,
+    int? position,
+    String? customName,
+    bool clearCustomName = false,
+  }) {
     return FavoriteStop(
       id: id,
       name: name ?? this.name,
+      customName: clearCustomName ? null : (customName ?? this.customName),
       anchorLatitude: anchorLatitude,
       anchorLongitude: anchorLongitude,
       position: position ?? this.position,

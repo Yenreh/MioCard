@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../l10n/app_localizations.dart';
+import '../../domain/entities/stop_entity.dart';
 import '../providers/stops_provider.dart';
 import '../widgets/favorite_stop_card.dart';
 
@@ -63,6 +64,50 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
     _notifier.stopAutoRefresh();
     _ticker?.cancel();
     _ticker = null;
+  }
+
+  Future<void> _rename(FavoriteStop stop) async {
+    final l10n = AppLocalizations.of(context)!;
+    final controller = TextEditingController(text: stop.customName ?? '');
+
+    final name = await showDialog<String>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: Text(l10n.editStop),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: controller,
+              autofocus: true,
+              decoration: InputDecoration(
+                labelText: l10n.customNameLabel,
+                hintText: stop.name,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              l10n.customNameHint,
+              style: Theme.of(dialogContext).textTheme.bodySmall,
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(controller.text),
+            child: Text(l10n.save),
+          ),
+        ],
+      ),
+    );
+
+    if (name == null) return;
+    await _notifier.renameFavorite(stop.id, name);
   }
 
   @override
@@ -134,6 +179,7 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
                         arrivals: state.arrivals[stop.id],
                         l10n: l10n,
                         onRemove: () => notifier.removeFavorite(stop.id),
+                        onRename: () => _rename(stop),
                       );
                     },
                   ),

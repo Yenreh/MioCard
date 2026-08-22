@@ -165,5 +165,8 @@
   "homeStopsOnly": "Solo paradas favoritas",
   "homeBoth": "Tarjetas y paradas",
   "myCards": "Mis tarjetas",
-  "seeAll": "Ver todas"
+  "seeAll": "Ver todas",
+  "editStop": "Renombrar parada",
+  "customNameLabel": "Nombre personalizado",
+  "customNameHint": "Déjalo vacío para usar el nombre real"
 }

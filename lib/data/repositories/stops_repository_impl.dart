@@ -26,6 +26,10 @@ class StopsRepositoryImpl implements StopsRepository {
       _localDatasource.delete(stopId);
 
   @override
+  Future<void> updateFavorite(FavoriteStop stop) =>
+      _localDatasource.update(stop);
+
+  @override
   Future<int> nextPosition() => _localDatasource.nextPosition();
 
   @override
