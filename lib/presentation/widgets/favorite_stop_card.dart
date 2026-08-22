@@ -8,14 +8,15 @@ class FavoriteStopCard extends StatelessWidget {
   final FavoriteStop stop;
   final List<BusArrival>? arrivals;
   final AppLocalizations l10n;
-  final VoidCallback onRemove;
+  /// Removing lives in the stops screen; null hides the action
+  final VoidCallback? onRemove;
 
   const FavoriteStopCard({
     super.key,
     required this.stop,
     required this.arrivals,
     required this.l10n,
-    required this.onRemove,
+    this.onRemove,
   });
 
   @override
@@ -47,12 +48,13 @@ class FavoriteStopCard extends StatelessWidget {
                   overflow: TextOverflow.ellipsis,
                 ),
               ),
-              IconButton(
-                icon: const Icon(Icons.star_rounded),
-                color: colorScheme.primary,
-                tooltip: l10n.removeStop,
-                onPressed: onRemove,
-              ),
+              if (onRemove != null)
+                IconButton(
+                  icon: const Icon(Icons.star_rounded),
+                  color: colorScheme.primary,
+                  tooltip: l10n.removeStop,
+                  onPressed: onRemove,
+                ),
             ],
           ),
           const SizedBox(height: 8),

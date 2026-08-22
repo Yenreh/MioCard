@@ -4,17 +4,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../domain/entities/card_entity.dart';
-import '../../data/datasources/card_remote_datasource.dart';
 import '../../l10n/app_localizations.dart';
 import '../providers/cards_provider.dart';
 import '../providers/settings_provider.dart';
 import '../widgets/card_item.dart';
+import '../widgets/card_refresh_listener.dart';
 import '../widgets/favorite_stop_card.dart';
 import '../providers/stops_provider.dart';
 import '../../core/theme/app_theme.dart';
 
-/// Main screen showing the cards, the favorite stops, or both
+/// Home dashboard: displays whatever the settings ask for.
+///
+/// Managing cards and stops lives in their own screens, reachable from
+/// the button at the bottom.
 class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({super.key});
 
@@ -92,69 +94,15 @@ class _MainScreenState extends ConsumerState<MainScreen>
 
     final showsCards = settings.showsCards;
     final showsStops = settings.showsStops;
+    final showsBoth = showsCards && showsStops;
     // Condensed cards leave room for the stops below them.
-    final compactCards = showsCards && showsStops && state.cards.length > 1;
+    final compactCards = showsBoth && state.cards.length > 1;
 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) _syncStopsWatch(showsStops);
     });
 
-    // Listen for refresh state changes
-    ref.listen<CardsState>(cardsProvider, (previous, next) {
-      // Show success snackbar when refresh succeeds
-      if (next.lastRefreshSuccess && !previous!.lastRefreshSuccess) {
-        ScaffoldMessenger.of(context).clearSnackBars();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.balanceUpdated),
-            backgroundColor: colorScheme.primary,
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 1),
-          ),
-        );
-      }
-
-      // Show typed error snackbar with retry action when refresh fails
-      if (next.refreshError != null &&
-          next.refreshError != previous?.refreshError) {
-        final failedCardId = next.refreshFailedCardId;
-        ScaffoldMessenger.of(context).clearSnackBars();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(_refreshErrorMessage(next.refreshError!, l10n)),
-            backgroundColor: colorScheme.error,
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 4),
-            action: failedCardId != null
-                ? SnackBarAction(
-                    label: l10n.retry,
-                    textColor: Colors.white,
-                    onPressed: () => notifier.refreshCardBalance(failedCardId),
-                  )
-                : null,
-          ),
-        );
-        Future.delayed(const Duration(milliseconds: 100), () {
-          notifier.clearRefreshError();
-        });
-      }
-
-      // Show error snackbar for non-refresh errors
-      if (next.error != null && next.error != previous?.error) {
-        ScaffoldMessenger.of(context).clearSnackBars();
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(l10n.couldNotUpdateBalance),
-            backgroundColor: colorScheme.error,
-            behavior: SnackBarBehavior.floating,
-            duration: const Duration(seconds: 2),
-          ),
-        );
-        Future.delayed(const Duration(milliseconds: 100), () {
-          notifier.clearError();
-        });
-      }
-    });
+    listenCardRefresh(context, ref, l10n);
 
     final isEmpty = (!showsCards || state.cards.isEmpty) &&
         (!showsStops || stops.favorites.isEmpty);
@@ -187,43 +135,21 @@ class _MainScreenState extends ConsumerState<MainScreen>
                         ),
                       ],
                     ),
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        GestureDetector(
-                          onTap: () => context.push('/stops'),
-                          child: Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              color: colorScheme.surfaceContainerHighest,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: Icon(
-                              Icons.signpost_rounded,
-                              color: colorScheme.onSurfaceVariant,
-                              size: 24,
-                            ),
-                          ),
+                    GestureDetector(
+                      onTap: () => context.push('/settings'),
+                      child: Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          gradient: AppColors.primaryGradient,
+                          borderRadius: BorderRadius.circular(12),
                         ),
-                        const SizedBox(width: 12),
-                        GestureDetector(
-                          onTap: () => context.push('/settings'),
-                          child: Container(
-                            width: 48,
-                            height: 48,
-                            decoration: BoxDecoration(
-                              gradient: AppColors.primaryGradient,
-                              borderRadius: BorderRadius.circular(12),
-                            ),
-                            child: const Icon(
-                              Icons.settings_rounded,
-                              color: Colors.white,
-                              size: 24,
-                            ),
-                          ),
+                        child: const Icon(
+                          Icons.settings_rounded,
+                          color: Colors.white,
+                          size: 24,
                         ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
@@ -236,14 +162,19 @@ class _MainScreenState extends ConsumerState<MainScreen>
               )
             else if (isEmpty)
               SliverFillRemaining(
-                child: _EmptyState(
-                  onCreateCard: () =>
-                      context.push(showsCards ? '/create' : '/stops/add'),
+                child: _DashboardEmptyState(
                   l10n: l10n,
+                  showsCards: showsCards,
                 ),
               )
             else ...[
-              if (showsCards)
+              if (showsCards) ...[
+                if (showsBoth)
+                  _SectionHeader(
+                    title: l10n.myCards,
+                    actionLabel: l10n.seeAll,
+                    onAction: () => context.push('/cards'),
+                  ),
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                   sliver: SliverList(
@@ -259,39 +190,26 @@ class _MainScreenState extends ConsumerState<MainScreen>
                           refreshFailed: state.refreshFailedCardId == card.id,
                           farePrice: settings.farePrice,
                           compact: compactCards,
+                          showManageActions: false,
                           onRefreshClick: () =>
                               notifier.refreshCardBalance(card.id),
-                          onEditClick: () => context.push('/edit/${card.id}'),
-                          onDeleteClick: () =>
-                              _showDeleteDialog(context, notifier, card, l10n),
+                          onEditClick: () => context.push('/cards'),
+                          onDeleteClick: () => context.push('/cards'),
                         ),
                       );
                     }, childCount: state.cards.length),
                   ),
                 ),
+              ],
               if (showsStops) ...[
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(24, 8, 16, 8),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          l10n.favoriteStops,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        TextButton(
-                          onPressed: () => context.push('/stops'),
-                          child: Text(l10n.seeAll),
-                        ),
-                      ],
-                    ),
+                if (showsBoth)
+                  _SectionHeader(
+                    title: l10n.favoriteStops,
+                    actionLabel: l10n.seeAll,
+                    onAction: () => context.push('/stops'),
                   ),
-                ),
                 SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
                   sliver: SliverList(
                     delegate: SliverChildBuilderDelegate((context, index) {
                       final stop = stops.favorites[index];
@@ -301,9 +219,6 @@ class _MainScreenState extends ConsumerState<MainScreen>
                           stop: stop,
                           arrivals: stops.arrivals[stop.id],
                           l10n: l10n,
-                          onRemove: () => ref
-                              .read(stopsProvider.notifier)
-                              .removeFavorite(stop.id),
                         ),
                       );
                     }, childCount: stops.favorites.length),
@@ -315,55 +230,162 @@ class _MainScreenState extends ConsumerState<MainScreen>
           ],
         ),
       ),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push(showsCards ? '/create' : '/stops/add'),
-        tooltip: showsCards ? l10n.newCard : l10n.addStop,
-        child: Icon(
-          showsCards ? Icons.add_rounded : Icons.add_location_alt_rounded,
-        ),
-      ),
+      floatingActionButton: _ManageFab(l10n: l10n),
     );
   }
+}
 
-  /// Map a typed API error to a user-friendly localized message
-  String _refreshErrorMessage(ApiException error, AppLocalizations l10n) {
-    return switch (error) {
-      NetworkApiException() => l10n.networkErrorMessage,
-      ServerApiException() => l10n.serverErrorMessage,
-      InvalidCardApiException() => l10n.invalidCardMessage,
-      CardNotFoundApiException() => l10n.cardNotFoundMessage,
-      RateLimitApiException() => l10n.rateLimitMessage,
-      _ => l10n.couldNotUpdateBalance,
-    };
-  }
+/// Section title with a link to the matching management screen
+class _SectionHeader extends StatelessWidget {
+  final String title;
+  final String actionLabel;
+  final VoidCallback onAction;
 
-  void _showDeleteDialog(
-      BuildContext context, CardsNotifier notifier, CardEntity card, AppLocalizations l10n) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (dialogContext) => _DeleteDialog(
-        cardName: card.name,
-        l10n: l10n,
-        onConfirm: () async {
-          Navigator.of(dialogContext).pop();
-          await notifier.deleteCardById(card.id);
-        },
-        onCancel: () {
-          Navigator.of(dialogContext).pop();
-        },
+  const _SectionHeader({
+    required this.title,
+    required this.actionLabel,
+    required this.onAction,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return SliverToBoxAdapter(
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(24, 8, 16, 0),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              title,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            TextButton(onPressed: onAction, child: Text(actionLabel)),
+          ],
+        ),
       ),
     );
   }
 }
 
-/// Empty state widget
-class _EmptyState extends StatelessWidget {
-  final VoidCallback onCreateCard;
+/// Button that unfolds into the cards and the stops screens
+class _ManageFab extends StatefulWidget {
   final AppLocalizations l10n;
 
-  const _EmptyState({required this.onCreateCard, required this.l10n});
+  const _ManageFab({required this.l10n});
+
+  @override
+  State<_ManageFab> createState() => _ManageFabState();
+}
+
+class _ManageFabState extends State<_ManageFab> {
+  bool _open = false;
+
+  void _go(String route) {
+    setState(() => _open = false);
+    context.push(route);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = widget.l10n;
+
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        _FabAction(
+          visible: _open,
+          icon: Icons.signpost_rounded,
+          label: l10n.favoriteStops,
+          onPressed: () => _go('/stops'),
+        ),
+        _FabAction(
+          visible: _open,
+          icon: Icons.credit_card_rounded,
+          label: l10n.myCards,
+          onPressed: () => _go('/cards'),
+        ),
+        FloatingActionButton(
+          onPressed: () => setState(() => _open = !_open),
+          tooltip: _open ? l10n.cancel : l10n.manageCards,
+          child: AnimatedRotation(
+            turns: _open ? 0.125 : 0,
+            duration: const Duration(milliseconds: 200),
+            child: const Icon(Icons.add_rounded),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// One of the choices that appear above the button
+class _FabAction extends StatelessWidget {
+  final bool visible;
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+
+  const _FabAction({
+    required this.visible,
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return AnimatedSlide(
+      offset: visible ? Offset.zero : const Offset(0, 0.4),
+      duration: const Duration(milliseconds: 200),
+      child: AnimatedOpacity(
+        opacity: visible ? 1 : 0,
+        duration: const Duration(milliseconds: 200),
+        child: IgnorePointer(
+          ignoring: !visible,
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: 12),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Card(
+                  color: theme.colorScheme.surfaceContainerHighest,
+                  margin: EdgeInsets.zero,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    child: Text(label, style: theme.textTheme.labelLarge),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                FloatingActionButton.small(
+                  heroTag: label,
+                  onPressed: onPressed,
+                  child: Icon(icon),
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Nothing to display yet, with a pointer to where things are managed
+class _DashboardEmptyState extends StatelessWidget {
+  final AppLocalizations l10n;
+  final bool showsCards;
+
+  const _DashboardEmptyState({required this.l10n, required this.showsCards});
 
   @override
   Widget build(BuildContext context) {
@@ -375,156 +397,38 @@ class _EmptyState extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          // Icon
           Container(
             width: 100,
             height: 100,
             decoration: BoxDecoration(
               gradient: AppColors.primaryGradient,
               borderRadius: BorderRadius.circular(24),
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.3),
-                  blurRadius: 30,
-                  offset: const Offset(0, 15),
-                ),
-              ],
             ),
-            child: const Icon(
-              Icons.credit_card_off_rounded,
+            child: Icon(
+              showsCards
+                  ? Icons.credit_card_off_rounded
+                  : Icons.signpost_rounded,
               size: 48,
               color: Colors.white,
             ),
           ),
           const SizedBox(height: 32),
           Text(
-            l10n.noCards,
+            showsCards ? l10n.noCards : l10n.noFavoriteStops,
             style: theme.textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.bold,
             ),
+            textAlign: TextAlign.center,
           ),
           const SizedBox(height: 12),
           Text(
-            l10n.noCardsMessage,
+            showsCards ? l10n.noCardsMessage : l10n.noFavoriteStopsMessage,
             textAlign: TextAlign.center,
             style: theme.textTheme.bodyLarge?.copyWith(
               color: colorScheme.onSurfaceVariant,
             ),
           ),
-          const SizedBox(height: 32),
-          ElevatedButton.icon(
-            onPressed: onCreateCard,
-            icon: const Icon(Icons.add_rounded),
-            label: Text(l10n.createFirstCard),
-            style: ElevatedButton.styleFrom(
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-            ),
-          ),
         ],
-      ),
-    );
-  }
-}
-
-/// Delete confirmation dialog
-class _DeleteDialog extends StatelessWidget {
-  final String cardName;
-  final AppLocalizations l10n;
-  final VoidCallback onConfirm;
-  final VoidCallback onCancel;
-
-  const _DeleteDialog({
-    required this.cardName,
-    required this.l10n,
-    required this.onConfirm,
-    required this.onCancel,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: colorScheme.surface,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.1),
-            blurRadius: 20,
-            offset: const Offset(0, -5),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            // Handle
-            Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: colorScheme.onSurfaceVariant,
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-            const SizedBox(height: 24),
-            // Icon
-            Container(
-              width: 64,
-              height: 64,
-              decoration: BoxDecoration(
-                color: colorScheme.error.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Icon(
-                Icons.delete_forever_rounded,
-                color: colorScheme.error,
-                size: 32,
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              l10n.deleteCardTitle,
-              style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              l10n.deleteCardMessage(cardName),
-              textAlign: TextAlign.center,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            ),
-            const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: onCancel,
-                    child: Text(l10n.cancel),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: onConfirm,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: colorScheme.error,
-                      foregroundColor: Colors.white,
-                    ),
-                    child: Text(l10n.delete),
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
       ),
     );
   }

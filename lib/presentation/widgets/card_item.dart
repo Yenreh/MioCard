@@ -14,6 +14,10 @@ class CardItemWidget extends StatelessWidget {
   /// Shorter layout, so more cards fit when the home screen also shows
   /// the favorite stops
   final bool compact;
+
+  /// Edit and delete live in the cards screen; the dashboard only
+  /// refreshes
+  final bool showManageActions;
   final VoidCallback onRefreshClick;
   final VoidCallback onEditClick;
   final VoidCallback onDeleteClick;
@@ -25,6 +29,7 @@ class CardItemWidget extends StatelessWidget {
     this.refreshFailed = false,
     required this.farePrice,
     this.compact = false,
+    this.showManageActions = true,
     required this.onRefreshClick,
     required this.onEditClick,
     required this.onDeleteClick,
@@ -138,19 +143,21 @@ class CardItemWidget extends StatelessWidget {
                           onPressed: onRefreshClick,
                           tooltip: l10n.updateBalance,
                         ),
-                        const SizedBox(width: 8),
-                        _CardActionButton(
-                          icon: Icons.edit_rounded,
-                          onPressed: onEditClick,
-                          tooltip: l10n.edit,
-                        ),
-                        const SizedBox(width: 8),
-                        _CardActionButton(
-                          icon: Icons.delete_rounded,
-                          onPressed: onDeleteClick,
-                          tooltip: l10n.delete,
-                          isDestructive: true,
-                        ),
+                        if (showManageActions) ...[
+                          const SizedBox(width: 8),
+                          _CardActionButton(
+                            icon: Icons.edit_rounded,
+                            onPressed: onEditClick,
+                            tooltip: l10n.edit,
+                          ),
+                          const SizedBox(width: 8),
+                          _CardActionButton(
+                            icon: Icons.delete_rounded,
+                            onPressed: onDeleteClick,
+                            tooltip: l10n.delete,
+                            isDestructive: true,
+                          ),
+                        ],
                       ],
                     ),
                   ],

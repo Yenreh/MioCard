@@ -4,6 +4,7 @@ import '../screens/create_card_screen.dart';
 import '../screens/edit_card_screen.dart';
 import '../screens/settings_screen.dart';
 import '../screens/stops_screen.dart';
+import '../screens/cards_screen.dart';
 import '../screens/add_stop_screen.dart';
 
 /// App router configuration
@@ -27,6 +28,11 @@ final appRouter = GoRouter(
         final cardId = state.pathParameters['cardId']!;
         return EditCardScreen(cardId: cardId);
       },
+    ),
+    GoRoute(
+      path: '/cards',
+      name: 'cards',
+      builder: (context, state) => const CardsScreen(),
     ),
     GoRoute(
       path: '/stops',
