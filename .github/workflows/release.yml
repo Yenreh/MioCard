@@ -47,12 +47,17 @@ jobs:
           VERSION=${{ steps.version.outputs.version }}
           sed -i "s/^version: .*/version: $VERSION+${{ github.run_number }}/" pubspec.yaml
 
-      - name: Build APK
-        run: flutter build apk --release
+      - name: Build APKs
+        # One APK per ABI: a universal APK bundles the native libraries of
+        # every architecture and is about three times larger.
+        run: flutter build apk --release --split-per-abi --target-platform android-arm,android-arm64
 
-      - name: Rename APK
+      - name: Rename APKs
         run: |
-          mv build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/MIOCard-v${{ steps.version.outputs.version }}.apk
+          cd build/app/outputs/flutter-apk
+          V=${{ steps.version.outputs.version }}
+          mv app-arm64-v8a-release.apk MIOCard-v$V-arm64-v8a.apk
+          mv app-armeabi-v7a-release.apk MIOCard-v$V-armeabi-v7a.apk
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
@@ -66,10 +71,13 @@ jobs:
             - See commit history for details
             
             ### Installation
-            1. Download the APK file below
+            1. Download `arm64-v8a` (any phone from the last decade).
+               Use `armeabi-v7a` only on old 32-bit devices.
             2. Enable "Install from unknown sources" on your device
             3. Install the APK
-          files: build/app/outputs/flutter-apk/MIOCard-v${{ steps.version.outputs.version }}.apk
+          files: |
+            build/app/outputs/flutter-apk/MIOCard-v${{ steps.version.outputs.version }}-arm64-v8a.apk
+            build/app/outputs/flutter-apk/MIOCard-v${{ steps.version.outputs.version }}-armeabi-v7a.apk
           draft: false
           prerelease: false
         env:
