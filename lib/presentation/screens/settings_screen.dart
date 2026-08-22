@@ -367,12 +367,14 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // Section titles read as plain labels: the accent colour, indigo in
+    // both themes, is too close to the dark background to serve here.
     return Text(
-      title,
-      style: theme.textTheme.titleSmall?.copyWith(
-        color: _accentOf(theme),
+      title.toUpperCase(),
+      style: theme.textTheme.labelMedium?.copyWith(
+        color: theme.colorScheme.onSurfaceVariant,
         fontWeight: FontWeight.bold,
-        letterSpacing: 0.5,
+        letterSpacing: 1.2,
       ),
     );
   }
