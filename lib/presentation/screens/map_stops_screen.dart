@@ -38,7 +38,7 @@ class _MapStopsScreenState extends ConsumerState<MapStopsScreen> {
   @override
   void initState() {
     super.initState();
-    _centreOnDevice();
+    _centreOnDevice(askForPermission: false);
     // Rotation is only reported through the event stream, so the needle
     // follows the map as it turns instead of jumping at the end.
     _events = _mapController.mapEventStream.listen((event) {
@@ -57,12 +57,14 @@ class _MapStopsScreenState extends ConsumerState<MapStopsScreen> {
   }
 
   /// Move to where the user is, staying on Cali when that is not known
-  Future<void> _centreOnDevice() async {
+  Future<void> _centreOnDevice({bool askForPermission = true}) async {
     if (_locating) return;
     setState(() => _locating = true);
 
     try {
-      final position = await currentDevicePosition();
+      final position = await currentDevicePosition(
+        requestPermission: askForPermission,
+      );
       if (!mounted || !_mapReady) return;
       _mapController.move(
         LatLng(position.latitude, position.longitude),
@@ -225,7 +227,7 @@ class _MapStopsScreenState extends ConsumerState<MapStopsScreen> {
                 right: 12,
                 bottom: 12,
                 child: IconButton.filledTonal(
-                  onPressed: _locating ? null : _centreOnDevice,
+                  onPressed: _locating ? null : () => _centreOnDevice(),
                   tooltip: l10n.myLocation,
                   icon: _locating
                       ? const SizedBox(

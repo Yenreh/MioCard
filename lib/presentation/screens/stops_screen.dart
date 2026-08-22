@@ -205,6 +205,7 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
                       return FavoriteStopCard(
                         stop: stop,
                         arrivals: state.arrivals[stop.id],
+                        isLoading: state.isRefreshing,
                         l10n: l10n,
                         onRemove: () => notifier.removeFavorite(stop.id),
                         onRename: () => _rename(stop),

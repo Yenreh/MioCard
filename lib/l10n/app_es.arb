@@ -179,5 +179,6 @@
   "cache": "Datos en caché",
   "cacheDesc": "Estaciones, rutas y posiciones de paradas",
   "clearCache": "Borrar",
-  "cacheCleared": "Caché borrada"
+  "cacheCleared": "Caché borrada",
+  "arrivalsUnknown": "Sin datos de llegadas"
 }

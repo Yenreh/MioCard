@@ -5,7 +5,9 @@ Una aplicación Flutter moderna para gestionar tarjetas de transporte MIO.
 ## Características
 
 - **Gestión de Tarjetas**: Crear, ver, editar y eliminar tarjetas de transporte
-- **Consulta de Saldo**: Integración con API para obtener el saldo actual
+- **Consulta de Saldo**: Dos fuentes públicas independientes, con respaldo automático
+- **Paradas Favoritas**: Tablero con los próximos buses de cada parada guardada
+- **Mapa**: Buscar paradas en cualquier punto de la ciudad, sobre OpenStreetMap
 - **Almacenamiento Local**: Persistencia usando SQLite (sqflite)
 - **Soporte Multilenguaje**: Español e Inglés
 - **Diseño Moderno**: Material Design 3 con gradientes y animaciones
@@ -17,6 +19,8 @@ Una aplicación Flutter moderna para gestionar tarjetas de transporte MIO.
 - **State Management**: Riverpod
 - **Base de Datos**: SQLite (sqflite)
 - **Networking**: http package
+- **Mapas**: flutter_map sobre teselas de OpenStreetMap
+- **Ubicación**: geolocator
 - **Navegación**: go_router
 - **Tipografías**: Google Fonts (Inter)
 

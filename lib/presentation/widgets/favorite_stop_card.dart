@@ -17,6 +17,10 @@ class FavoriteStopCard extends StatelessWidget {
   /// Offered when the stop went missing; null hides the action
   final VoidCallback? onRelink;
 
+  /// Whether a refresh is on its way, which tells an empty card apart
+  /// from one still waiting for its first answer
+  final bool isLoading;
+
   const FavoriteStopCard({
     super.key,
     required this.stop,
@@ -25,6 +29,7 @@ class FavoriteStopCard extends StatelessWidget {
     this.onRemove,
     this.onRename,
     this.onRelink,
+    this.isLoading = false,
   });
 
   @override
@@ -114,10 +119,17 @@ class FavoriteStopCard extends StatelessWidget {
           ],
           const SizedBox(height: 8),
           if (list == null)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              child: LinearProgressIndicator(),
-            )
+            isLoading
+                ? const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: LinearProgressIndicator(),
+                  )
+                : Text(
+                    l10n.arrivalsUnknown,
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                  )
           else if (list.isEmpty)
             Text(
               l10n.noBusesComing,

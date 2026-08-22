@@ -179,5 +179,6 @@
   "cache": "Cached data",
   "cacheDesc": "Stations, lines and stop positions",
   "clearCache": "Clear",
-  "cacheCleared": "Cached data cleared"
+  "cacheCleared": "Cached data cleared",
+  "arrivalsUnknown": "No arrivals yet"
 }

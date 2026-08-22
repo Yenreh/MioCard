@@ -31,14 +31,15 @@ class _MainScreenState extends ConsumerState<MainScreen>
   bool _watchingStops = false;
 
   /// Held so dispose does not have to reach for ref, which is unsafe
-  /// once the widget is being unmounted.
-  late final StopsNotifier _stopsNotifier;
+  /// once the widget is being unmounted. Read on first use: reading it
+  /// starts the stops loading, which is wasted when the home screen
+  /// shows only the cards.
+  StopsNotifier? _stopsNotifier;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    _stopsNotifier = ref.read(stopsProvider.notifier);
   }
 
   @override
@@ -54,7 +55,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
     if (state == AppLifecycleState.resumed) {
       if (ref.read(settingsProvider).showsStops) {
         _startWatchingStops();
-        _stopsNotifier.refreshArrivals();
+        _stopsNotifier?.refreshArrivals();
       }
     } else {
       _stopWatchingStops();
@@ -68,7 +69,8 @@ class _MainScreenState extends ConsumerState<MainScreen>
 
   void _startWatchingStops() {
     _watchingStops = true;
-    _stopsNotifier.startAutoRefresh();
+    _stopsNotifier ??= ref.read(stopsProvider.notifier);
+    _stopsNotifier!.startAutoRefresh();
     _ticker ??= Timer.periodic(
       const Duration(seconds: 15),
       (_) => setState(() {}),
@@ -77,7 +79,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
 
   void _stopWatchingStops() {
     _watchingStops = false;
-    _stopsNotifier.stopAutoRefresh();
+    _stopsNotifier?.stopAutoRefresh();
     _ticker?.cancel();
     _ticker = null;
   }
@@ -86,7 +88,6 @@ class _MainScreenState extends ConsumerState<MainScreen>
   Widget build(BuildContext context) {
     final state = ref.watch(cardsProvider);
     final settings = ref.watch(settingsProvider);
-    final stops = ref.watch(stopsProvider);
     final notifier = ref.read(cardsProvider.notifier);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
@@ -94,6 +95,8 @@ class _MainScreenState extends ConsumerState<MainScreen>
 
     final showsCards = settings.showsCards;
     final showsStops = settings.showsStops;
+    final stops =
+        showsStops ? ref.watch(stopsProvider) : const StopsState();
     final showsBoth = showsCards && showsStops;
     // Condensed cards leave room for the stops below them.
     final compactCards = showsBoth && state.cards.length > 1;
@@ -209,7 +212,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
                   onAction: () => context.push('/stops'),
                   isRefreshing: stops.isRefreshing,
                   onRefresh: () =>
-                      _stopsNotifier.refreshArrivals(force: true),
+                      _stopsNotifier?.refreshArrivals(force: true),
                 ),
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
@@ -221,6 +224,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
                         child: FavoriteStopCard(
                           stop: stop,
                           arrivals: stops.arrivals[stop.id],
+                          isLoading: stops.isRefreshing,
                           l10n: l10n,
                         ),
                       );

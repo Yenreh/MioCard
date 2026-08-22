@@ -883,6 +883,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Cached data cleared'**
   String get cacheCleared;
+
+  /// No description provided for @arrivalsUnknown.
+  ///
+  /// In en, this message translates to:
+  /// **'No arrivals yet'**
+  String get arrivalsUnknown;
 }
 
 class _AppLocalizationsDelegate

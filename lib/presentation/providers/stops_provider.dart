@@ -409,14 +409,18 @@ class LocationUnavailableException implements Exception {
   const LocationUnavailableException({this.permanentlyDenied = false});
 }
 
-/// Current position, asking for permission the first time
-Future<Position> currentDevicePosition() async {
+/// Current position.
+///
+/// Only asks for the permission when [requestPermission] is set, so a
+/// screen can quietly use the location it already has without putting a
+/// system prompt in front of someone who just opened it.
+Future<Position> currentDevicePosition({bool requestPermission = true}) async {
   if (!await Geolocator.isLocationServiceEnabled()) {
     throw const LocationUnavailableException();
   }
 
   var permission = await Geolocator.checkPermission();
-  if (permission == LocationPermission.denied) {
+  if (permission == LocationPermission.denied && requestPermission) {
     permission = await Geolocator.requestPermission();
   }
   if (permission == LocationPermission.deniedForever) {

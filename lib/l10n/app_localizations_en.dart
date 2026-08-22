@@ -435,4 +435,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cacheCleared => 'Cached data cleared';
+
+  @override
+  String get arrivalsUnknown => 'No arrivals yet';
 }

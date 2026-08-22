@@ -443,4 +443,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get cacheCleared => 'Caché borrada';
+
+  @override
+  String get arrivalsUnknown => 'Sin datos de llegadas';
 }
