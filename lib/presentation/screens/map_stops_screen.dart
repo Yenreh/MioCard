@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_map/flutter_map.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
@@ -155,6 +156,21 @@ class _MapStopsScreenState extends ConsumerState<MapStopsScreen> {
                     userAgentPackageName: 'com.example.miocard',
                   ),
                   MarkerLayer(markers: _markers(context, results)),
+                  // The tiles come from the OpenStreetMap Foundation and
+                  // its data is ODbL: both ask to be credited on the map.
+                  RichAttributionWidget(
+                    alignment: AttributionAlignment.bottomLeft,
+                    animationConfig: const ScaleRAWA(),
+                    attributions: [
+                      TextSourceAttribution(
+                        'OpenStreetMap contributors',
+                        onTap: () => launchUrl(
+                          Uri.parse('https://openstreetmap.org/copyright'),
+                          mode: LaunchMode.externalApplication,
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
               // Crosshair marking the point that will be searched
