@@ -169,12 +169,13 @@ class _MainScreenState extends ConsumerState<MainScreen>
               )
             else ...[
               if (showsCards) ...[
-                if (showsBoth)
-                  _SectionHeader(
-                    title: l10n.myCards,
-                    actionLabel: l10n.seeAll,
-                    onAction: () => context.push('/cards'),
-                  ),
+                _SectionHeader(
+                  title: l10n.myCards,
+                  actionLabel: l10n.seeAll,
+                  onAction: () => context.push('/cards'),
+                  isRefreshing: state.isRefreshingAll,
+                  onRefresh: notifier.refreshAllBalances,
+                ),
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
                   sliver: SliverList(
@@ -202,12 +203,14 @@ class _MainScreenState extends ConsumerState<MainScreen>
                 ),
               ],
               if (showsStops) ...[
-                if (showsBoth)
-                  _SectionHeader(
-                    title: l10n.favoriteStops,
-                    actionLabel: l10n.seeAll,
-                    onAction: () => context.push('/stops'),
-                  ),
+                _SectionHeader(
+                  title: l10n.favoriteStops,
+                  actionLabel: l10n.seeAll,
+                  onAction: () => context.push('/stops'),
+                  isRefreshing: stops.isRefreshing,
+                  onRefresh: () =>
+                      _stopsNotifier.refreshArrivals(force: true),
+                ),
                 SliverPadding(
                   padding: const EdgeInsets.fromLTRB(16, 8, 16, 96),
                   sliver: SliverList(
@@ -235,16 +238,20 @@ class _MainScreenState extends ConsumerState<MainScreen>
   }
 }
 
-/// Section title with a link to the matching management screen
+/// Section title, with a way to refresh it and a link to its screen
 class _SectionHeader extends StatelessWidget {
   final String title;
   final String actionLabel;
   final VoidCallback onAction;
+  final bool isRefreshing;
+  final VoidCallback onRefresh;
 
   const _SectionHeader({
     required this.title,
     required this.actionLabel,
     required this.onAction,
+    required this.isRefreshing,
+    required this.onRefresh,
   });
 
   @override
@@ -253,16 +260,32 @@ class _SectionHeader extends StatelessWidget {
 
     return SliverToBoxAdapter(
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(24, 8, 16, 0),
+        padding: const EdgeInsets.fromLTRB(24, 8, 8, 0),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              title,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
+            Expanded(
+              child: Text(
+                title,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
+            if (isRefreshing)
+              const Padding(
+                padding: EdgeInsets.symmetric(horizontal: 14),
+                child: SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              )
+            else
+              IconButton(
+                icon: const Icon(Icons.refresh_rounded),
+                tooltip: title,
+                onPressed: onRefresh,
+              ),
             TextButton(onPressed: onAction, child: Text(actionLabel)),
           ],
         ),

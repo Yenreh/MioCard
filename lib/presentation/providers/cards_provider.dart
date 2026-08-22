@@ -25,6 +25,7 @@ class CardsState {
   final bool isLoading;
   final String? error;
   final String? refreshingCardId;
+  final bool isRefreshingAll;
   final ApiException? refreshError;
   final String? refreshFailedCardId;
   final CardEntity? cardToDelete;
@@ -37,6 +38,7 @@ class CardsState {
     this.isLoading = false,
     this.error,
     this.refreshingCardId,
+    this.isRefreshingAll = false,
     this.refreshError,
     this.refreshFailedCardId,
     this.cardToDelete,
@@ -50,6 +52,7 @@ class CardsState {
     bool? isLoading,
     String? error,
     String? refreshingCardId,
+    bool? isRefreshingAll,
     ApiException? refreshError,
     String? refreshFailedCardId,
     CardEntity? cardToDelete,
@@ -67,6 +70,7 @@ class CardsState {
       error: clearError ? null : (error ?? this.error),
       refreshingCardId:
           clearRefreshing ? null : (refreshingCardId ?? this.refreshingCardId),
+      isRefreshingAll: isRefreshingAll ?? this.isRefreshingAll,
       refreshError:
           clearRefreshError ? null : (refreshError ?? this.refreshError),
       refreshFailedCardId: clearRefreshError
@@ -184,6 +188,47 @@ class CardsNotifier extends Notifier<CardsState> {
   /// Clear the last refresh error and failed card flag
   void clearRefreshError() {
     state = state.copyWith(clearRefreshError: true);
+  }
+
+  /// Refresh every card, one at a time so the service is not hammered
+  Future<void> refreshAllBalances() async {
+    if (state.isRefreshingAll || state.refreshingCardId != null) return;
+    if (state.cards.isEmpty) return;
+
+    state = state.copyWith(
+      isRefreshingAll: true,
+      lastRefreshSuccess: false,
+      clearError: true,
+      clearRefreshError: true,
+    );
+
+    ApiException? failure;
+    String? failedCardId;
+
+    for (final card in state.cards) {
+      try {
+        final balance = await _repository.refreshCardBalance(card);
+        await _repository.updateCardBalance(
+          card.id,
+          balance.balance,
+          balance.balanceDate,
+        );
+      } on ApiException catch (e) {
+        failure ??= e;
+        failedCardId ??= card.id;
+      } catch (e) {
+        failure ??= ApiException(e.toString());
+        failedCardId ??= card.id;
+      }
+    }
+
+    await loadCards();
+    state = state.copyWith(
+      isRefreshingAll: false,
+      refreshError: failure,
+      refreshFailedCardId: failedCardId,
+      lastRefreshSuccess: failure == null,
+    );
   }
 
   /// Show delete confirmation dialog

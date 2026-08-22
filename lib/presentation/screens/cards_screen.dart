@@ -30,6 +30,25 @@ class CardsScreen extends ConsumerWidget {
           icon: const Icon(Icons.arrow_back_rounded),
           onPressed: () => context.pop(),
         ),
+        actions: [
+          if (state.isRefreshingAll)
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              child: Center(
+                child: SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                ),
+              ),
+            )
+          else if (state.cards.isNotEmpty)
+            IconButton(
+              icon: const Icon(Icons.refresh_rounded),
+              tooltip: l10n.updateBalance,
+              onPressed: notifier.refreshAllBalances,
+            ),
+        ],
       ),
       body: state.isLoading && state.cards.isEmpty
           ? const Center(child: CircularProgressIndicator())
