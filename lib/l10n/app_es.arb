@@ -171,5 +171,7 @@
   "customNameHint": "Déjalo vacío para usar el nombre real",
   "myLocation": "Mi ubicación",
   "stopDetails": "Detalles de la parada",
-  "resetNorth": "Orientar al norte"
+  "resetNorth": "Orientar al norte",
+  "madeBy": "by Yenreh",
+  "licenses": "Licencias de código abierto"
 }

@@ -304,6 +304,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               color: colorScheme.onSurfaceVariant,
                             ),
                           ),
+                          Text(
+                            l10n.madeBy,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          GestureDetector(
+                            onTap: () => showLicensePage(
+                              context: context,
+                              applicationName: 'MIOCard',
+                              applicationVersion: _appVersion,
+                              applicationLegalese: 'by Yenreh',
+                            ),
+                            child: Text(
+                              l10n.licenses,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: _accentOf(theme),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ],

@@ -419,4 +419,10 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get resetNorth => 'Orientar al norte';
+
+  @override
+  String get madeBy => 'by Yenreh';
+
+  @override
+  String get licenses => 'Licencias de código abierto';
 }

@@ -168,6 +168,7 @@ class _MapStopsScreenState extends ConsumerState<MapStopsScreen> {
                   // its data is ODbL: both ask to be credited on the map.
                   RichAttributionWidget(
                     alignment: AttributionAlignment.bottomLeft,
+                    showFlutterMapAttribution: false,
                     animationConfig: const ScaleRAWA(),
                     attributions: [
                       TextSourceAttribution(
