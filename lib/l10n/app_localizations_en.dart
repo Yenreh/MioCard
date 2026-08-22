@@ -372,4 +372,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get save => 'Save';
+
+  @override
+  String get homeScreen => 'Home screen';
+
+  @override
+  String get homeScreenDesc => 'What to show when the app opens';
+
+  @override
+  String get homeCardsOnly => 'Cards only';
+
+  @override
+  String get homeStopsOnly => 'Favorite stops only';
+
+  @override
+  String get homeBoth => 'Cards and stops';
+
+  @override
+  String get myCards => 'My cards';
+
+  @override
+  String get seeAll => 'See all';
 }

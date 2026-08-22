@@ -46,4 +46,12 @@ class StopsRepositoryImpl implements StopsRepository {
   @override
   Future<List<StopLine>> getLinesByStop(String stopId) =>
       _remoteDatasource.getLinesByStop(stopId);
+
+  @override
+  Future<List<NearbyStop>> getLocatedStops(double latitude, double longitude) {
+    return _remoteDatasource.getLocatedStops(
+      latitude: latitude,
+      longitude: longitude,
+    );
+  }
 }

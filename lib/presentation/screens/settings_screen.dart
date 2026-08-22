@@ -97,6 +97,44 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
           const SizedBox(height: 24),
 
+          // Home screen section
+          _SectionHeader(title: l10n.homeScreen),
+          const SizedBox(height: 8),
+          _SettingsCard(
+            child: Column(
+              children: [
+                _ThemeOption(
+                  title: l10n.homeCardsOnly,
+                  subtitle: l10n.homeScreenDesc,
+                  icon: Icons.credit_card_rounded,
+                  isSelected: settings.homeContent == HomeContent.cards,
+                  onTap: () =>
+                      settingsNotifier.setHomeContent(HomeContent.cards),
+                ),
+                const Divider(height: 1),
+                _ThemeOption(
+                  title: l10n.homeStopsOnly,
+                  subtitle: l10n.homeScreenDesc,
+                  icon: Icons.signpost_rounded,
+                  isSelected: settings.homeContent == HomeContent.stops,
+                  onTap: () =>
+                      settingsNotifier.setHomeContent(HomeContent.stops),
+                ),
+                const Divider(height: 1),
+                _ThemeOption(
+                  title: l10n.homeBoth,
+                  subtitle: l10n.homeScreenDesc,
+                  icon: Icons.dashboard_rounded,
+                  isSelected: settings.homeContent == HomeContent.both,
+                  onTap: () =>
+                      settingsNotifier.setHomeContent(HomeContent.both),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
           // Fare Section
           _SectionHeader(title: l10n.fare),
           const SizedBox(height: 8),
@@ -158,13 +196,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             child: TextField(
                               controller: _farePriceController,
                               keyboardType: TextInputType.number,
-                              decoration: InputDecoration(
+                              decoration: const InputDecoration(
                                 hintText: '3200',
                                 prefixText: '\$ ',
                                 border: InputBorder.none,
                                 enabledBorder: InputBorder.none,
                                 focusedBorder: InputBorder.none,
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                               ),
                             ),
                           ),

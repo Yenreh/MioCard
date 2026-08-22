@@ -10,6 +10,10 @@ class CardItemWidget extends StatelessWidget {
   final bool isRefreshing;
   final bool refreshFailed;
   final int farePrice;
+
+  /// Shorter layout, so more cards fit when the home screen also shows
+  /// the favorite stops
+  final bool compact;
   final VoidCallback onRefreshClick;
   final VoidCallback onEditClick;
   final VoidCallback onDeleteClick;
@@ -20,6 +24,7 @@ class CardItemWidget extends StatelessWidget {
     required this.isRefreshing,
     this.refreshFailed = false,
     required this.farePrice,
+    this.compact = false,
     required this.onRefreshClick,
     required this.onEditClick,
     required this.onDeleteClick,
@@ -35,6 +40,8 @@ class CardItemWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
+
+    if (compact) return _buildCompact(context, theme, l10n);
 
     return Container(
       constraints: const BoxConstraints(minHeight: 200),
@@ -295,6 +302,81 @@ class CardItemWidget extends StatelessWidget {
     );
   }
 
+  /// Condensed card: number, name and balance on a single row
+  Widget _buildCompact(
+    BuildContext context,
+    ThemeData theme,
+    AppLocalizations l10n,
+  ) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  card.name.toUpperCase(),
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _formatCardNumber(card.displayId),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: Colors.white.withAlpha(179),
+                    fontFamily: 'monospace',
+                    letterSpacing: 1,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _BalanceDisplay(balance: card.balance, compact: true),
+              if (card.balance != null && availableFares > 0)
+                Text(
+                  l10n.fares(availableFares),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: Colors.white70,
+                    fontSize: 10,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(width: 8),
+          _CardActionButton(
+            icon: isRefreshing ? null : Icons.refresh_rounded,
+            isLoading: isRefreshing,
+            onPressed: onRefreshClick,
+            tooltip: l10n.updateBalance,
+          ),
+        ],
+      ),
+    );
+  }
+
   /// Format card number with spaces for readability
   String _formatCardNumber(String number) {
     // Remove existing spaces
@@ -373,8 +455,9 @@ class _CardActionButton extends StatelessWidget {
 /// Balance display with colored text and currency formatting
 class _BalanceDisplay extends StatelessWidget {
   final double? balance;
+  final bool compact;
 
-  const _BalanceDisplay({this.balance});
+  const _BalanceDisplay({this.balance, this.compact = false});
 
   static final _currencyFormat = NumberFormat.currency(
     locale: 'es_CO',
@@ -386,10 +469,13 @@ class _BalanceDisplay extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    final baseStyle =
+        compact ? theme.textTheme.titleMedium : theme.textTheme.titleLarge;
+
     if (balance == null) {
       return Text(
         '---',
-        style: theme.textTheme.titleLarge?.copyWith(
+        style: baseStyle?.copyWith(
           color: Colors.white.withAlpha(128),
           fontWeight: FontWeight.bold,
         ),
@@ -405,7 +491,7 @@ class _BalanceDisplay extends StatelessWidget {
 
     return Text(
       _currencyFormat.format(balance),
-      style: theme.textTheme.titleLarge?.copyWith(
+      style: baseStyle?.copyWith(
         color: balanceColor,
         fontWeight: FontWeight.bold,
         letterSpacing: 1,

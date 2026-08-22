@@ -3,6 +3,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:latlong2/latlong.dart';
 
+import '../../domain/entities/stop_entity.dart';
 import '../../l10n/app_localizations.dart';
 import '../providers/stops_provider.dart';
 import '../widgets/stop_details_sheet.dart';
@@ -23,6 +24,7 @@ class MapStopsScreen extends ConsumerStatefulWidget {
 class _MapStopsScreenState extends ConsumerState<MapStopsScreen> {
   final _mapController = MapController();
   MapPoint? _searched;
+  String? _selectedStopId;
 
   @override
   void dispose() {
@@ -34,6 +36,7 @@ class _MapStopsScreenState extends ConsumerState<MapStopsScreen> {
     final center = _mapController.camera.center;
     setState(() {
       _searched = (latitude: center.latitude, longitude: center.longitude);
+      _selectedStopId = null;
     });
   }
 
@@ -77,6 +80,52 @@ class _MapStopsScreenState extends ConsumerState<MapStopsScreen> {
     if (mounted) Navigator.of(context).pop();
   }
 
+  void _select(NearbyStop stop, MapPoint point) {
+    setState(() => _selectedStopId = stop.id);
+    if (stop.hasPosition) {
+      _mapController.move(
+        LatLng(stop.latitude!, stop.longitude!),
+        _mapController.camera.zoom,
+      );
+    }
+    StopDetailsSheet.show(
+      context,
+      stop: stop,
+      anchorLatitude: point.latitude,
+      anchorLongitude: point.longitude,
+    );
+  }
+
+  /// One marker per placed stop, the selected one standing out
+  List<Marker> _markers(
+    BuildContext context,
+    AsyncValue<List<NearbyStop>>? results,
+  ) {
+    final stops = results?.asData?.value;
+    if (stops == null) return const [];
+
+    final colorScheme = Theme.of(context).colorScheme;
+
+    return [
+      for (final stop in stops.where((s) => s.hasPosition))
+        Marker(
+          point: LatLng(stop.latitude!, stop.longitude!),
+          width: 36,
+          height: 36,
+          child: GestureDetector(
+            onTap: () => _select(stop, _searched!),
+            child: Icon(
+              Icons.directions_bus_rounded,
+              size: stop.id == _selectedStopId ? 34 : 24,
+              color: stop.id == _selectedStopId
+                  ? colorScheme.error
+                  : colorScheme.primary,
+            ),
+          ),
+        ),
+    ];
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -105,6 +154,7 @@ class _MapStopsScreenState extends ConsumerState<MapStopsScreen> {
                         'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
                     userAgentPackageName: 'com.example.miocard',
                   ),
+                  MarkerLayer(markers: _markers(context, results)),
                 ],
               ),
               // Crosshair marking the point that will be searched

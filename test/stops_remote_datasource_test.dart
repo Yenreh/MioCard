@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
@@ -156,6 +158,57 @@ void main() {
 
       expect(calls, 2);
       expect(stops, hasLength(2));
+    });
+
+    test('places stops by trilaterating three distance readings', () async {
+      // A stop 50 m north and 30 m east of the origin, seen from the
+      // origin and from two vantage points 120 m away.
+      const originLat = 3.4842;
+      const originLon = -76.5134;
+      const metresPerDegree = 111320.0;
+      final lonScale = metresPerDegree * math.cos(originLat * math.pi / 180);
+
+      String body(double distance) =>
+          '[{"idParada":"1","nombreParada":"Target","distanciaMetros":'
+          '$distance,"buses":[]}]';
+
+      final client = MockClient((request) async {
+        final lat = double.parse(request.url.queryParameters['latitud']!);
+        final lon = double.parse(request.url.queryParameters['longitud']!);
+        final vantageY = (lat - originLat) * metresPerDegree;
+        final vantageX = (lon - originLon) * lonScale;
+        final distance = math.sqrt(
+          math.pow(30 - vantageX, 2) + math.pow(50 - vantageY, 2),
+        );
+        return http.Response(body(distance), 200);
+      });
+
+      final stops = await _datasource(client)
+          .getLocatedStops(latitude: originLat, longitude: originLon);
+
+      expect(stops, hasLength(1));
+      final stop = stops.single;
+      expect(stop.hasPosition, isTrue);
+      expect(
+        (stop.latitude! - originLat) * metresPerDegree,
+        closeTo(50, 1),
+      );
+      expect((stop.longitude! - originLon) * lonScale, closeTo(30, 1));
+    });
+
+    test('keeps stops that only the first reading saw', () async {
+      var call = 0;
+      final client = MockClient((_) async {
+        call++;
+        // Only the origin sees the stop; the vantage points are empty.
+        return http.Response(call == 1 ? _arrivalsBody : '[]', 200);
+      });
+
+      final stops = await _datasource(client)
+          .getLocatedStops(latitude: 3.4516, longitude: -76.532);
+
+      expect(stops, hasLength(2));
+      expect(stops.every((s) => s.hasPosition), isFalse);
     });
 
     test('parses the station catalog', () async {

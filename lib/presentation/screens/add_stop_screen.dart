@@ -7,6 +7,7 @@ import '../../l10n/app_localizations.dart';
 import '../providers/stops_provider.dart';
 import '../widgets/stop_details_sheet.dart';
 import 'map_stops_screen.dart';
+import 'station_stops_screen.dart';
 
 /// Add a favorite stop, either from nearby stops or from the station catalog
 class AddStopScreen extends ConsumerStatefulWidget {
@@ -24,48 +25,6 @@ class _AddStopScreenState extends ConsumerState<AddStopScreen> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
-  }
-
-  /// Save a station as an area: it spans several platforms, and no single
-  /// stop id covers all of its arrivals.
-  Future<void> _saveArea({
-    required String id,
-    required String name,
-    required double latitude,
-    required double longitude,
-  }) async {
-    final l10n = AppLocalizations.of(context)!;
-    final messenger = ScaffoldMessenger.of(context);
-    final notifier = ref.read(stopsProvider.notifier);
-
-    final alreadySaved =
-        ref.read(stopsProvider).favorites.any((s) => s.id == id);
-    if (alreadySaved) {
-      messenger.showSnackBar(
-        SnackBar(
-          content: Text(l10n.stopAlreadySaved),
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-      return;
-    }
-
-    await notifier.addFavorite(
-      id: id,
-      name: name,
-      anchorLatitude: latitude,
-      anchorLongitude: longitude,
-    );
-
-    if (!mounted) return;
-    messenger.showSnackBar(
-      SnackBar(
-        content: Text(l10n.stopSaved),
-        behavior: SnackBarBehavior.floating,
-        duration: const Duration(seconds: 1),
-      ),
-    );
-    context.pop();
   }
 
   @override
@@ -98,7 +57,6 @@ class _AddStopScreenState extends ConsumerState<AddStopScreen> {
               controller: _searchController,
               query: _query,
               onQueryChanged: (value) => setState(() => _query = value),
-              onSave: _saveArea,
             ),
           ],
         ),
@@ -106,13 +64,6 @@ class _AddStopScreenState extends ConsumerState<AddStopScreen> {
     );
   }
 }
-
-typedef _SaveArea = Future<void> Function({
-  required String id,
-  required String name,
-  required double latitude,
-  required double longitude,
-});
 
 /// Stops around the device, with the buses coming to each
 class _NearbyTab extends ConsumerWidget {
@@ -182,14 +133,12 @@ class _StationsTab extends ConsumerWidget {
   final TextEditingController controller;
   final String query;
   final ValueChanged<String> onQueryChanged;
-  final _SaveArea onSave;
 
   const _StationsTab({
     required this.l10n,
     required this.controller,
     required this.query,
     required this.onQueryChanged,
-    required this.onSave,
   });
 
   @override
@@ -238,11 +187,10 @@ class _StationsTab extends ConsumerWidget {
                     title: Text(station.name),
                     subtitle: Text(station.address),
                     trailing: const Icon(Icons.star_outline_rounded),
-                    onTap: () => onSave(
-                      id: 'station-${station.id}',
-                      name: station.name,
-                      latitude: station.latitude,
-                      longitude: station.longitude,
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute<void>(
+                        builder: (_) => StationStopsScreen(station: station),
+                      ),
                     ),
                   );
                 },

@@ -158,5 +158,12 @@
   "saveThisArea": "Guardar esta zona",
   "areaName": "Nombre de la zona",
   "mapHint": "Mueve el mapa y busca para ver paradas en cualquier lugar",
-  "save": "Guardar"
+  "save": "Guardar",
+  "homeScreen": "Pantalla de inicio",
+  "homeScreenDesc": "Qué mostrar al abrir la app",
+  "homeCardsOnly": "Solo tarjetas",
+  "homeStopsOnly": "Solo paradas favoritas",
+  "homeBoth": "Tarjetas y paradas",
+  "myCards": "Mis tarjetas",
+  "seeAll": "Ver todas"
 }

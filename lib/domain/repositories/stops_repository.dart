@@ -25,4 +25,7 @@ abstract class StopsRepository {
 
   /// Lines serving a stop
   Future<List<StopLine>> getLinesByStop(String stopId);
+
+  /// Stops around a point, placed on the map where possible
+  Future<List<NearbyStop>> getLocatedStops(double latitude, double longitude);
 }

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:http/http.dart' as http;
 
@@ -101,6 +102,100 @@ class StopsRemoteDatasource {
           ),
         )
         .toList(growable: false);
+  }
+
+  /// Stops around a point, each placed on the map when possible.
+  ///
+  /// The service reports how far a stop is but never where it is, so the
+  /// same area is queried from two extra vantage points and each stop is
+  /// trilaterated from the three distances. Stops that fall out of range
+  /// of the extra points simply come back without a position.
+  Future<List<NearbyStop>> getLocatedStops({
+    required double latitude,
+    required double longitude,
+  }) async {
+    const offset = 120.0;
+    final lonScale = _metresPerDegree * cos(latitude * pi / 180);
+
+    final origin = await getNearbyStops(
+      latitude: latitude,
+      longitude: longitude,
+    );
+
+    final List<List<NearbyStop>> extras;
+    try {
+      extras = await Future.wait([
+        getNearbyStops(
+          latitude: latitude + offset / _metresPerDegree,
+          longitude: longitude,
+        ),
+        getNearbyStops(
+          latitude: latitude,
+          longitude: longitude + offset / lonScale,
+        ),
+      ]);
+    } on ApiException {
+      // Placing the stops is a bonus: keep the list even without it.
+      return origin;
+    }
+
+    final north = {for (final s in extras[0]) s.id: s.distanceMeters};
+    final east = {for (final s in extras[1]) s.id: s.distanceMeters};
+
+    return origin.map((stop) {
+      final dNorth = north[stop.id];
+      final dEast = east[stop.id];
+      if (dNorth == null || dEast == null) return stop;
+
+      final point = _trilaterate(
+        [
+          (x: 0.0, y: 0.0, d: stop.distanceMeters),
+          (x: 0.0, y: offset, d: dNorth),
+          (x: offset, y: 0.0, d: dEast),
+        ],
+      );
+      if (point == null) return stop;
+
+      return stop.withPosition(
+        latitude + point.y / _metresPerDegree,
+        longitude + point.x / lonScale,
+      );
+    }).toList(growable: false);
+  }
+
+  /// Metres per degree of latitude, close enough over a few hundred metres
+  static const double _metresPerDegree = 111320.0;
+
+  /// Intersect three distance circles in a local metric frame
+  ({double x, double y})? _trilaterate(
+    List<({double x, double y, double d})> readings,
+  ) {
+    final (p1, p2, p3) = (readings[0], readings[1], readings[2]);
+
+    final a = 2 * (p2.x - p1.x);
+    final b = 2 * (p2.y - p1.y);
+    final c = p1.d * p1.d -
+        p2.d * p2.d -
+        p1.x * p1.x +
+        p2.x * p2.x -
+        p1.y * p1.y +
+        p2.y * p2.y;
+    final d = 2 * (p3.x - p2.x);
+    final e = 2 * (p3.y - p2.y);
+    final f = p2.d * p2.d -
+        p3.d * p3.d -
+        p2.x * p2.x +
+        p3.x * p3.x -
+        p2.y * p2.y +
+        p3.y * p3.y;
+
+    final denominator = a * e - d * b;
+    if (denominator.abs() < 1e-9) return null;
+
+    return (
+      x: (c * e - f * b) / denominator,
+      y: (a * f - d * c) / denominator,
+    );
   }
 
   /// Lines serving a stop, useful when no bus is on its way

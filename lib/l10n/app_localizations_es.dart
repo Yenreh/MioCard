@@ -380,4 +380,25 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get save => 'Guardar';
+
+  @override
+  String get homeScreen => 'Pantalla de inicio';
+
+  @override
+  String get homeScreenDesc => 'Qué mostrar al abrir la app';
+
+  @override
+  String get homeCardsOnly => 'Solo tarjetas';
+
+  @override
+  String get homeStopsOnly => 'Solo paradas favoritas';
+
+  @override
+  String get homeBoth => 'Tarjetas y paradas';
+
+  @override
+  String get myCards => 'Mis tarjetas';
+
+  @override
+  String get seeAll => 'Ver todas';
 }

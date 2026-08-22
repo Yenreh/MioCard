@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -8,20 +10,94 @@ import '../../l10n/app_localizations.dart';
 import '../providers/cards_provider.dart';
 import '../providers/settings_provider.dart';
 import '../widgets/card_item.dart';
+import '../widgets/favorite_stop_card.dart';
+import '../providers/stops_provider.dart';
 import '../../core/theme/app_theme.dart';
 
-/// Main screen showing list of cards
-class MainScreen extends ConsumerWidget {
+/// Main screen showing the cards, the favorite stops, or both
+class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<MainScreen> createState() => _MainScreenState();
+}
+
+class _MainScreenState extends ConsumerState<MainScreen>
+    with WidgetsBindingObserver {
+  /// Repaints the countdowns between network refreshes
+  Timer? _ticker;
+  bool _watchingStops = false;
+
+  /// Held so dispose does not have to reach for ref, which is unsafe
+  /// once the widget is being unmounted.
+  late final StopsNotifier _stopsNotifier;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _stopsNotifier = ref.read(stopsProvider.notifier);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _stopWatchingStops();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    // Do not poll the arrivals service while in the background.
+    if (state == AppLifecycleState.resumed) {
+      if (ref.read(settingsProvider).showsStops) {
+        _startWatchingStops();
+        _stopsNotifier.refreshArrivals();
+      }
+    } else {
+      _stopWatchingStops();
+    }
+  }
+
+  void _syncStopsWatch(bool shouldWatch) {
+    if (shouldWatch == _watchingStops) return;
+    shouldWatch ? _startWatchingStops() : _stopWatchingStops();
+  }
+
+  void _startWatchingStops() {
+    _watchingStops = true;
+    _stopsNotifier.startAutoRefresh();
+    _ticker ??= Timer.periodic(
+      const Duration(seconds: 15),
+      (_) => setState(() {}),
+    );
+  }
+
+  void _stopWatchingStops() {
+    _watchingStops = false;
+    _stopsNotifier.stopAutoRefresh();
+    _ticker?.cancel();
+    _ticker = null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final state = ref.watch(cardsProvider);
     final settings = ref.watch(settingsProvider);
+    final stops = ref.watch(stopsProvider);
     final notifier = ref.read(cardsProvider.notifier);
     final theme = Theme.of(context);
     final colorScheme = theme.colorScheme;
     final l10n = AppLocalizations.of(context)!;
+
+    final showsCards = settings.showsCards;
+    final showsStops = settings.showsStops;
+    // Condensed cards leave room for the stops below them.
+    final compactCards = showsCards && showsStops && state.cards.length > 1;
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _syncStopsWatch(showsStops);
+    });
 
     // Listen for refresh state changes
     ref.listen<CardsState>(cardsProvider, (previous, next) {
@@ -31,7 +107,7 @@ class MainScreen extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(l10n.balanceUpdated),
-            backgroundColor: Theme.of(context).colorScheme.primary,
+            backgroundColor: colorScheme.primary,
             behavior: SnackBarBehavior.floating,
             duration: const Duration(seconds: 1),
           ),
@@ -46,20 +122,18 @@ class MainScreen extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(_refreshErrorMessage(next.refreshError!, l10n)),
-            backgroundColor: Theme.of(context).colorScheme.error,
+            backgroundColor: colorScheme.error,
             behavior: SnackBarBehavior.floating,
             duration: const Duration(seconds: 4),
             action: failedCardId != null
                 ? SnackBarAction(
                     label: l10n.retry,
                     textColor: Colors.white,
-                    onPressed: () =>
-                        notifier.refreshCardBalance(failedCardId),
+                    onPressed: () => notifier.refreshCardBalance(failedCardId),
                   )
                 : null,
           ),
         );
-        // Clear error after a delay to avoid the snackbar being cleared
         Future.delayed(const Duration(milliseconds: 100), () {
           notifier.clearRefreshError();
         });
@@ -71,23 +145,24 @@ class MainScreen extends ConsumerWidget {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: Text(l10n.couldNotUpdateBalance),
-            backgroundColor: Theme.of(context).colorScheme.error,
+            backgroundColor: colorScheme.error,
             behavior: SnackBarBehavior.floating,
             duration: const Duration(seconds: 2),
           ),
         );
-        // Clear error after a delay to avoid the snackbar being cleared
         Future.delayed(const Duration(milliseconds: 100), () {
           notifier.clearError();
         });
       }
     });
 
+    final isEmpty = (!showsCards || state.cards.isEmpty) &&
+        (!showsStops || stops.favorites.isEmpty);
+
     return Scaffold(
       body: SafeArea(
         child: CustomScrollView(
           slivers: [
-            // App bar
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
@@ -112,7 +187,6 @@ class MainScreen extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    // Stops and settings buttons
                     Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -156,44 +230,97 @@ class MainScreen extends ConsumerWidget {
               ),
             ),
 
-            // Content
-            if (state.isLoading && state.cards.isEmpty)
+            if (state.isLoading && state.cards.isEmpty && showsCards)
               const SliverFillRemaining(
                 child: Center(child: CircularProgressIndicator()),
               )
-            else if (state.cards.isEmpty)
+            else if (isEmpty)
               SliverFillRemaining(
-                child: _EmptyState(onCreateCard: () => context.push('/create'), l10n: l10n),
-              )
-            else
-              SliverPadding(
-                padding: const EdgeInsets.all(16),
-                sliver: SliverList(
-                  delegate: SliverChildBuilderDelegate((context, index) {
-                    final card = state.cards[index];
-                    return Padding(
-                      padding: const EdgeInsets.only(bottom: 16),
-                      child: CardItemWidget(
-                        card: card,
-                        isRefreshing: state.refreshingCardId == card.id,
-                        refreshFailed: state.refreshFailedCardId == card.id,
-                        farePrice: settings.farePrice,
-                        onRefreshClick: () =>
-                            notifier.refreshCardBalance(card.id),
-                        onEditClick: () => context.push('/edit/${card.id}'),
-                        onDeleteClick: () => _showDeleteDialog(context, notifier, card, l10n),
-                      ),
-                    );
-                  }, childCount: state.cards.length),
+                child: _EmptyState(
+                  onCreateCard: () =>
+                      context.push(showsCards ? '/create' : '/stops/add'),
+                  l10n: l10n,
                 ),
-              ),
+              )
+            else ...[
+              if (showsCards)
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final card = state.cards[index];
+                      return Padding(
+                        padding: EdgeInsets.only(
+                          bottom: compactCards ? 10 : 16,
+                        ),
+                        child: CardItemWidget(
+                          card: card,
+                          isRefreshing: state.refreshingCardId == card.id,
+                          refreshFailed: state.refreshFailedCardId == card.id,
+                          farePrice: settings.farePrice,
+                          compact: compactCards,
+                          onRefreshClick: () =>
+                              notifier.refreshCardBalance(card.id),
+                          onEditClick: () => context.push('/edit/${card.id}'),
+                          onDeleteClick: () =>
+                              _showDeleteDialog(context, notifier, card, l10n),
+                        ),
+                      );
+                    }, childCount: state.cards.length),
+                  ),
+                ),
+              if (showsStops) ...[
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(24, 8, 16, 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          l10n.favoriteStops,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () => context.push('/stops'),
+                          child: Text(l10n.seeAll),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                SliverPadding(
+                  padding: const EdgeInsets.fromLTRB(16, 0, 16, 96),
+                  sliver: SliverList(
+                    delegate: SliverChildBuilderDelegate((context, index) {
+                      final stop = stops.favorites[index];
+                      return Padding(
+                        padding: const EdgeInsets.only(bottom: 12),
+                        child: FavoriteStopCard(
+                          stop: stop,
+                          arrivals: stops.arrivals[stop.id],
+                          l10n: l10n,
+                          onRemove: () => ref
+                              .read(stopsProvider.notifier)
+                              .removeFavorite(stop.id),
+                        ),
+                      );
+                    }, childCount: stops.favorites.length),
+                  ),
+                ),
+              ] else
+                const SliverToBoxAdapter(child: SizedBox(height: 96)),
+            ],
           ],
         ),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: () => context.push('/create'),
-        tooltip: l10n.newCard,
-        child: const Icon(Icons.add_rounded),
+        onPressed: () => context.push(showsCards ? '/create' : '/stops/add'),
+        tooltip: showsCards ? l10n.newCard : l10n.addStop,
+        child: Icon(
+          showsCards ? Icons.add_rounded : Icons.add_location_alt_rounded,
+        ),
       ),
     );
   }

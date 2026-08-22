@@ -757,6 +757,48 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Save'**
   String get save;
+
+  /// No description provided for @homeScreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Home screen'**
+  String get homeScreen;
+
+  /// No description provided for @homeScreenDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'What to show when the app opens'**
+  String get homeScreenDesc;
+
+  /// No description provided for @homeCardsOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Cards only'**
+  String get homeCardsOnly;
+
+  /// No description provided for @homeStopsOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorite stops only'**
+  String get homeStopsOnly;
+
+  /// No description provided for @homeBoth.
+  ///
+  /// In en, this message translates to:
+  /// **'Cards and stops'**
+  String get homeBoth;
+
+  /// No description provided for @myCards.
+  ///
+  /// In en, this message translates to:
+  /// **'My cards'**
+  String get myCards;
+
+  /// No description provided for @seeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'See all'**
+  String get seeAll;
 }
 
 class _AppLocalizationsDelegate

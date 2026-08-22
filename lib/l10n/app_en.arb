@@ -158,5 +158,12 @@
   "saveThisArea": "Save this area",
   "areaName": "Area name",
   "mapHint": "Move the map and search to see stops anywhere",
-  "save": "Save"
+  "save": "Save",
+  "homeScreen": "Home screen",
+  "homeScreenDesc": "What to show when the app opens",
+  "homeCardsOnly": "Cards only",
+  "homeStopsOnly": "Favorite stops only",
+  "homeBoth": "Cards and stops",
+  "myCards": "My cards",
+  "seeAll": "See all"
 }

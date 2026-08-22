@@ -73,7 +73,7 @@ class StopsNotifier extends Notifier<StopsState> {
   Future<void> loadFavorites() async {
     state = state.copyWith(isLoading: true, clearError: true);
     try {
-      final favorites = await _repository.getFavorites();
+      final favorites = await _sortByDistance(await _repository.getFavorites());
       state = state.copyWith(favorites: favorites, isLoading: false);
       if (favorites.isNotEmpty) await refreshArrivals();
     } on ApiException catch (e) {
@@ -83,6 +83,49 @@ class StopsNotifier extends Notifier<StopsState> {
         error: ApiException(e.toString()),
         isLoading: false,
       );
+    }
+  }
+
+  /// Put the closest stops first when the location is already known.
+  ///
+  /// Never asks for the permission here: the dashboard has to work
+  /// without it, and only the nearby search is worth a prompt.
+  Future<List<FavoriteStop>> _sortByDistance(List<FavoriteStop> stops) async {
+    if (stops.length < 2) return stops;
+
+    try {
+      final permission = await Geolocator.checkPermission();
+      final granted = permission == LocationPermission.always ||
+          permission == LocationPermission.whileInUse;
+      if (!granted) return stops;
+
+      final position = await Geolocator.getLastKnownPosition() ??
+          await Geolocator.getCurrentPosition(
+            locationSettings: const LocationSettings(
+              accuracy: LocationAccuracy.low,
+              timeLimit: Duration(seconds: 8),
+            ),
+          );
+
+      final sorted = [...stops]..sort((a, b) {
+          final da = Geolocator.distanceBetween(
+            position.latitude,
+            position.longitude,
+            a.anchorLatitude,
+            a.anchorLongitude,
+          );
+          final db = Geolocator.distanceBetween(
+            position.latitude,
+            position.longitude,
+            b.anchorLatitude,
+            b.anchorLongitude,
+          );
+          return da.compareTo(db);
+        });
+      return sorted;
+    } catch (_) {
+      // Location is optional here: keep the order the user saved.
+      return stops;
     }
   }
 
@@ -232,7 +275,7 @@ final stopsAtPointProvider =
   (ref, point) async {
     return ref
         .read(stopsRepositoryProvider)
-        .getNearbyStops(point.latitude, point.longitude);
+        .getLocatedStops(point.latitude, point.longitude);
   },
 );
 

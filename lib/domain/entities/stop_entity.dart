@@ -31,12 +31,32 @@ class NearbyStop {
   final double distanceMeters;
   final List<BusArrival> arrivals;
 
+  /// Position worked out from several distance readings. Null when the
+  /// stop was not seen from enough vantage points to place it.
+  final double? latitude;
+  final double? longitude;
+
   const NearbyStop({
     required this.id,
     required this.name,
     required this.distanceMeters,
     this.arrivals = const [],
+    this.latitude,
+    this.longitude,
   });
+
+  bool get hasPosition => latitude != null && longitude != null;
+
+  NearbyStop withPosition(double latitude, double longitude) {
+    return NearbyStop(
+      id: id,
+      name: name,
+      distanceMeters: distanceMeters,
+      arrivals: arrivals,
+      latitude: latitude,
+      longitude: longitude,
+    );
+  }
 }
 
 /// A stop saved by the user.

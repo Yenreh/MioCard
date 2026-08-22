@@ -4,9 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
-import '../../domain/entities/stop_entity.dart';
 import '../../l10n/app_localizations.dart';
 import '../providers/stops_provider.dart';
+import '../widgets/favorite_stop_card.dart';
 
 /// Dashboard of favorite stops with their upcoming buses
 class StopsScreen extends ConsumerStatefulWidget {
@@ -21,10 +21,15 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
   /// Repaints the countdowns between network refreshes
   Timer? _ticker;
 
+  /// Held so dispose does not have to reach for ref, which is unsafe
+  /// once the widget is being unmounted.
+  late final StopsNotifier _notifier;
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _notifier = ref.read(stopsProvider.notifier);
     _start();
   }
 
@@ -40,14 +45,14 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
     // Do not poll the arrivals service while in the background.
     if (state == AppLifecycleState.resumed) {
       _start();
-      ref.read(stopsProvider.notifier).refreshArrivals();
+      _notifier.refreshArrivals();
     } else {
       _stop();
     }
   }
 
   void _start() {
-    ref.read(stopsProvider.notifier).startAutoRefresh();
+    _notifier.startAutoRefresh();
     _ticker ??= Timer.periodic(
       const Duration(seconds: 15),
       (_) => setState(() {}),
@@ -55,7 +60,7 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
   }
 
   void _stop() {
-    ref.read(stopsProvider.notifier).stopAutoRefresh();
+    _notifier.stopAutoRefresh();
     _ticker?.cancel();
     _ticker = null;
   }
@@ -124,7 +129,7 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
                     separatorBuilder: (_, _) => const SizedBox(height: 12),
                     itemBuilder: (context, index) {
                       final stop = state.favorites[index];
-                      return _StopCard(
+                      return FavoriteStopCard(
                         stop: stop,
                         arrivals: state.arrivals[stop.id],
                         l10n: l10n,
@@ -137,157 +142,6 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
         onPressed: () => context.push('/stops/add'),
         tooltip: l10n.addStop,
         child: const Icon(Icons.add_location_alt_rounded),
-      ),
-    );
-  }
-}
-
-/// One favorite stop with its next buses
-class _StopCard extends StatelessWidget {
-  final FavoriteStop stop;
-  final List<BusArrival>? arrivals;
-  final AppLocalizations l10n;
-  final VoidCallback onRemove;
-
-  const _StopCard({
-    required this.stop,
-    required this.arrivals,
-    required this.l10n,
-    required this.onRemove,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final list = arrivals;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      padding: const EdgeInsets.all(16),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(Icons.signpost_rounded, size: 18, color: colorScheme.primary),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  stop.name,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              IconButton(
-                icon: const Icon(Icons.star_rounded),
-                color: colorScheme.primary,
-                tooltip: l10n.removeStop,
-                onPressed: onRemove,
-              ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          if (list == null)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 8),
-              child: LinearProgressIndicator(),
-            )
-          else if (list.isEmpty)
-            Text(
-              l10n.noBusesComing,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
-            )
-          else
-            ...list.take(5).map(
-                  (arrival) => _ArrivalRow(
-                    arrival: arrival,
-                    l10n: l10n,
-                    showStopName: stop.isArea,
-                  ),
-                ),
-        ],
-      ),
-    );
-  }
-}
-
-/// A single line/destination/countdown row
-class _ArrivalRow extends StatelessWidget {
-  final BusArrival arrival;
-  final AppLocalizations l10n;
-  final bool showStopName;
-
-  const _ArrivalRow({
-    required this.arrival,
-    required this.l10n,
-    this.showStopName = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-    final minutes = arrival.minutesUntilArrival();
-
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6),
-      child: Row(
-        children: [
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: colorScheme.primary,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Text(
-              arrival.line,
-              style: theme.textTheme.labelMedium?.copyWith(
-                color: colorScheme.onPrimary,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  arrival.destination,
-                  style: theme.textTheme.bodyMedium,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                if (showStopName && arrival.stopName.isNotEmpty)
-                  Text(
-                    arrival.stopName,
-                    style: theme.textTheme.labelSmall?.copyWith(
-                      color: colorScheme.onSurfaceVariant,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            minutes == 0 ? l10n.arrivingNow : l10n.minutesShort(minutes),
-            style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-              color: minutes <= 2 ? colorScheme.primary : null,
-            ),
-          ),
-        ],
       ),
     );
   }
