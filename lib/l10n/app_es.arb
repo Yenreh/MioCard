@@ -60,23 +60,23 @@
   "farePrice": "Valor del pasaje",
   "farePriceDesc": "Se usa para calcular cuantos pasajes te alcanza el saldo",
   "data": "Datos",
-  "exportCards": "Exportar tarjetas",
-  "exportCardsDesc": "Guardar copia de seguridad",
-  "importCards": "Importar tarjetas",
-  "importCardsDesc": "Restaurar desde archivo",
+  "exportData": "Exportar datos",
+  "exportDataDesc": "Copia de tarjetas, paradas y ajustes",
+  "importData": "Importar datos",
+  "importDataDesc": "Restaurar desde un archivo",
   "about": "Acerca de",
   "version": "Version",
-  "noCardsToExport": "No hay tarjetas para exportar",
+  "nothingToExport": "No hay datos para exportar",
   "importError": "Error al importar",
-  "importedCards": "{count} tarjeta{count, plural, =1{} other{s}} importada{count, plural, =1{} other{s}}",
-  "@importedCards": {
+  "importedItems": "{count} elemento{count, plural, =1{} other{s}} importado{count, plural, =1{} other{s}}",
+  "@importedItems": {
     "placeholders": {
       "count": {
         "type": "int"
       }
     }
   },
-  "noNewCardsImported": "No se importaron tarjetas nuevas",
+  "noNewItemsImported": "No hay nada nuevo para importar",
   "couldNotUpdateBalance": "No se pudo actualizar el saldo",
   "name": "NOMBRE",
   "fares": "{count} pasaje{count, plural, =1{} other{s}}",

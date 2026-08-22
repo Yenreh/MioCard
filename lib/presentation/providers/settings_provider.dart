@@ -128,6 +128,12 @@ class SettingsNotifier extends Notifier<SettingsState> {
     }
   }
 
+  /// Apply the settings found in a backup
+  Future<void> importSettings(Map<String, dynamic> json) async {
+    state = SettingsState.fromJson(json);
+    await _saveSettings();
+  }
+
   void setHomeContent(HomeContent content) {
     state = state.copyWith(homeContent: content);
     _saveSettings();

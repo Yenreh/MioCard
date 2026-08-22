@@ -245,6 +245,7 @@ class StopsNotifier extends Notifier<StopsState> {
     required double anchorLatitude,
     required double anchorLongitude,
     String? stopId,
+    String? customName,
   }) async {
     final position = await _repository.nextPosition();
     await _repository.addFavorite(
@@ -255,6 +256,9 @@ class StopsNotifier extends Notifier<StopsState> {
         anchorLongitude: anchorLongitude,
         position: position,
         stopId: stopId,
+        customName: (customName?.trim().isEmpty ?? true)
+            ? null
+            : customName!.trim(),
       ),
     );
     await loadFavorites();

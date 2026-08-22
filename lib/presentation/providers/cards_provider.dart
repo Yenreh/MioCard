@@ -9,6 +9,7 @@ import 'package:uuid/uuid.dart';
 
 import '../../domain/entities/card_entity.dart';
 import '../../domain/entities/stop_entity.dart';
+import 'settings_provider.dart';
 import 'stops_provider.dart';
 import '../../data/datasources/card_remote_datasource.dart';
 import '../../data/repositories/card_repository_impl.dart';
@@ -279,8 +280,8 @@ class CardsNotifier extends Notifier<CardsState> {
     state = state.copyWith(clearError: true);
   }
 
-  /// Export all cards to JSON file and share
-  Future<bool> exportCards() async {
+  /// Export cards, stops and settings to a JSON file, then share it
+  Future<bool> exportData() async {
     try {
       final stops = ref.read(stopsProvider).favorites;
 
@@ -290,10 +291,11 @@ class CardsNotifier extends Notifier<CardsState> {
       }
 
       final exportData = {
-        'version': 2,
+        'version': 3,
         'exportDate': DateTime.now().toIso8601String(),
         'cards': state.cards.map((c) => c.toJson()).toList(),
         'favoriteStops': stops.map((s) => s.toJson()).toList(),
+        'settings': ref.read(settingsProvider).toJson(),
       };
 
       final jsonString = const JsonEncoder.withIndent('  ').convert(exportData);
@@ -316,8 +318,8 @@ class CardsNotifier extends Notifier<CardsState> {
     }
   }
 
-  /// Import cards from JSON file
-  Future<int> importCards() async {
+  /// Restore cards, stops and settings from a backup file
+  Future<int> importData() async {
     try {
       final result = await FilePicker.platform.pickFiles(
         type: FileType.custom,
@@ -348,6 +350,11 @@ class CardsNotifier extends Notifier<CardsState> {
           await _repository.createCard(newCard);
           importedCount++;
         }
+      }
+
+      final settings = data['settings'];
+      if (settings is Map<String, dynamic>) {
+        await ref.read(settingsProvider.notifier).importSettings(settings);
       }
 
       importedCount += await ref.read(stopsProvider.notifier).importFavorites(

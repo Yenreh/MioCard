@@ -172,16 +172,16 @@ class AppLocalizationsEs extends AppLocalizations {
   String get data => 'Datos';
 
   @override
-  String get exportCards => 'Exportar tarjetas';
+  String get exportData => 'Exportar datos';
 
   @override
-  String get exportCardsDesc => 'Guardar copia de seguridad';
+  String get exportDataDesc => 'Copia de tarjetas, paradas y ajustes';
 
   @override
-  String get importCards => 'Importar tarjetas';
+  String get importData => 'Importar datos';
 
   @override
-  String get importCardsDesc => 'Restaurar desde archivo';
+  String get importDataDesc => 'Restaurar desde un archivo';
 
   @override
   String get about => 'Acerca de';
@@ -190,13 +190,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get version => 'Version';
 
   @override
-  String get noCardsToExport => 'No hay tarjetas para exportar';
+  String get nothingToExport => 'No hay datos para exportar';
 
   @override
   String get importError => 'Error al importar';
 
   @override
-  String importedCards(int count) {
+  String importedItems(int count) {
     String _temp0 = intl.Intl.pluralLogic(
       count,
       locale: localeName,
@@ -209,11 +209,11 @@ class AppLocalizationsEs extends AppLocalizations {
       other: 's',
       one: '',
     );
-    return '$count tarjeta$_temp0 importada$_temp1';
+    return '$count elemento$_temp0 importado$_temp1';
   }
 
   @override
-  String get noNewCardsImported => 'No se importaron tarjetas nuevas';
+  String get noNewItemsImported => 'No hay nada nuevo para importar';
 
   @override
   String get couldNotUpdateBalance => 'No se pudo actualizar el saldo';

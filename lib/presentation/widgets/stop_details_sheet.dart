@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../domain/entities/stop_entity.dart';
 import '../../l10n/app_localizations.dart';
 import '../providers/stops_provider.dart';
+import 'stop_name_dialog.dart';
 
 /// Details of a stop: the buses on their way and the lines serving it.
 ///
@@ -142,12 +143,20 @@ class StopDetailsSheet extends ConsumerWidget {
                 onPressed: isSaved
                     ? null
                     : () async {
+                        final customName = await showStopNameDialog(
+                          context,
+                          title: l10n.saveAsFavorite,
+                          realName: stop.name,
+                        );
+                        if (customName == null) return;
+
                         await ref.read(stopsProvider.notifier).addFavorite(
                               id: stop.id,
                               stopId: stop.id,
                               name: stop.name,
                               anchorLatitude: anchorLatitude,
                               anchorLongitude: anchorLongitude,
+                              customName: customName,
                             );
                         if (context.mounted) Navigator.of(context).pop();
                       },

@@ -242,15 +242,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
             child: Column(
               children: [
                 _ActionTile(
-                  title: l10n.exportCards,
-                  subtitle: l10n.exportCardsDesc,
+                  title: l10n.exportData,
+                  subtitle: l10n.exportDataDesc,
                   icon: Icons.upload_rounded,
                   onTap: () => _handleExport(context, cardsNotifier, l10n),
                 ),
                 const Divider(height: 1),
                 _ActionTile(
-                  title: l10n.importCards,
-                  subtitle: l10n.importCardsDesc,
+                  title: l10n.importData,
+                  subtitle: l10n.importDataDesc,
                   icon: Icons.download_rounded,
                   onTap: () => _handleImport(context, cardsNotifier, l10n),
                 ),
@@ -341,11 +341,11 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Future<void> _handleExport(
       BuildContext context, CardsNotifier cardsNotifier, AppLocalizations l10n) async {
-    final success = await cardsNotifier.exportCards();
+    final success = await cardsNotifier.exportData();
     if (context.mounted && !success) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(l10n.noCardsToExport),
+          content: Text(l10n.nothingToExport),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -354,15 +354,15 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
   Future<void> _handleImport(
       BuildContext context, CardsNotifier cardsNotifier, AppLocalizations l10n) async {
-    final count = await cardsNotifier.importCards();
+    final count = await cardsNotifier.importData();
     if (context.mounted) {
       String message;
       if (count < 0) {
         message = l10n.importError;
       } else if (count == 0) {
-        message = l10n.noNewCardsImported;
+        message = l10n.noNewItemsImported;
       } else {
-        message = l10n.importedCards(count);
+        message = l10n.importedItems(count);
       }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

@@ -8,6 +8,7 @@ import '../../l10n/app_localizations.dart';
 import '../../domain/entities/stop_entity.dart';
 import '../providers/stops_provider.dart';
 import '../widgets/favorite_stop_card.dart';
+import '../widgets/stop_name_dialog.dart';
 
 /// Dashboard of favorite stops with their upcoming buses
 class StopsScreen extends ConsumerStatefulWidget {
@@ -68,45 +69,14 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
 
   Future<void> _rename(FavoriteStop stop) async {
     final l10n = AppLocalizations.of(context)!;
-    final controller = TextEditingController(text: stop.customName ?? '');
-
-    final name = await showDialog<String>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.editStop),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            TextField(
-              controller: controller,
-              autofocus: true,
-              decoration: InputDecoration(
-                labelText: l10n.customNameLabel,
-                hintText: stop.name,
-              ),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              l10n.customNameHint,
-              style: Theme.of(dialogContext).textTheme.bodySmall,
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(l10n.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.of(dialogContext).pop(controller.text),
-            child: Text(l10n.save),
-          ),
-        ],
-      ),
+    final name = await showStopNameDialog(
+      context,
+      title: l10n.editStop,
+      realName: stop.name,
+      initial: stop.customName,
     );
-
     if (name == null) return;
+
     await _notifier.renameFavorite(stop.id, name);
   }
 

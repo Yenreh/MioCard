@@ -416,29 +416,29 @@ abstract class AppLocalizations {
   /// **'Data'**
   String get data;
 
-  /// No description provided for @exportCards.
+  /// No description provided for @exportData.
   ///
   /// In en, this message translates to:
-  /// **'Export cards'**
-  String get exportCards;
+  /// **'Export data'**
+  String get exportData;
 
-  /// No description provided for @exportCardsDesc.
+  /// No description provided for @exportDataDesc.
   ///
   /// In en, this message translates to:
-  /// **'Save backup copy'**
-  String get exportCardsDesc;
+  /// **'Back up cards, stops and settings'**
+  String get exportDataDesc;
 
-  /// No description provided for @importCards.
+  /// No description provided for @importData.
   ///
   /// In en, this message translates to:
-  /// **'Import cards'**
-  String get importCards;
+  /// **'Import data'**
+  String get importData;
 
-  /// No description provided for @importCardsDesc.
+  /// No description provided for @importDataDesc.
   ///
   /// In en, this message translates to:
-  /// **'Restore from file'**
-  String get importCardsDesc;
+  /// **'Restore from a backup file'**
+  String get importDataDesc;
 
   /// No description provided for @about.
   ///
@@ -452,11 +452,11 @@ abstract class AppLocalizations {
   /// **'Version'**
   String get version;
 
-  /// No description provided for @noCardsToExport.
+  /// No description provided for @nothingToExport.
   ///
   /// In en, this message translates to:
-  /// **'No cards to export'**
-  String get noCardsToExport;
+  /// **'There is nothing to export'**
+  String get nothingToExport;
 
   /// No description provided for @importError.
   ///
@@ -464,17 +464,17 @@ abstract class AppLocalizations {
   /// **'Import error'**
   String get importError;
 
-  /// No description provided for @importedCards.
+  /// No description provided for @importedItems.
   ///
   /// In en, this message translates to:
-  /// **'{count} card{count, plural, =1{} other{s}} imported'**
-  String importedCards(int count);
+  /// **'{count} item{count, plural, =1{} other{s}} imported'**
+  String importedItems(int count);
 
-  /// No description provided for @noNewCardsImported.
+  /// No description provided for @noNewItemsImported.
   ///
   /// In en, this message translates to:
-  /// **'No new cards imported'**
-  String get noNewCardsImported;
+  /// **'Nothing new to import'**
+  String get noNewItemsImported;
 
   /// No description provided for @couldNotUpdateBalance.
   ///

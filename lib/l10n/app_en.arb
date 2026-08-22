@@ -60,23 +60,23 @@
   "farePrice": "Fare price",
   "farePriceDesc": "Used to calculate how many fares your balance covers",
   "data": "Data",
-  "exportCards": "Export cards",
-  "exportCardsDesc": "Save backup copy",
-  "importCards": "Import cards",
-  "importCardsDesc": "Restore from file",
+  "exportData": "Export data",
+  "exportDataDesc": "Back up cards, stops and settings",
+  "importData": "Import data",
+  "importDataDesc": "Restore from a backup file",
   "about": "About",
   "version": "Version",
-  "noCardsToExport": "No cards to export",
+  "nothingToExport": "There is nothing to export",
   "importError": "Import error",
-  "importedCards": "{count} card{count, plural, =1{} other{s}} imported",
-  "@importedCards": {
+  "importedItems": "{count} item{count, plural, =1{} other{s}} imported",
+  "@importedItems": {
     "placeholders": {
       "count": {
         "type": "int"
       }
     }
   },
-  "noNewCardsImported": "No new cards imported",
+  "noNewItemsImported": "Nothing new to import",
   "couldNotUpdateBalance": "Could not update balance",
   "name": "NAME",
   "fares": "{count} fare{count, plural, =1{} other{s}}",

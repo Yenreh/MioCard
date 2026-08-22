@@ -5,6 +5,7 @@ import '../../domain/entities/stop_entity.dart';
 import '../../l10n/app_localizations.dart';
 import '../providers/stops_provider.dart';
 import '../widgets/stop_details_sheet.dart';
+import '../widgets/stop_name_dialog.dart';
 
 /// Stops belonging to a station.
 ///
@@ -29,11 +30,19 @@ class StationStopsScreen extends ConsumerWidget {
             icon: const Icon(Icons.star_outline_rounded),
             tooltip: l10n.saveThisArea,
             onPressed: () async {
+              final customName = await showStopNameDialog(
+                context,
+                title: l10n.saveThisArea,
+                realName: station.name,
+              );
+              if (customName == null) return;
+
               await ref.read(stopsProvider.notifier).addFavorite(
                     id: 'station-${station.id}',
                     name: station.name,
                     anchorLatitude: station.latitude,
                     anchorLongitude: station.longitude,
+                    customName: customName,
                   );
               if (context.mounted) Navigator.of(context).pop();
             },
