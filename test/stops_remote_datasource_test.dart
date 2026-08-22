@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:miocard/data/datasources/api_exception.dart';
+import 'package:miocard/data/datasources/json_cache.dart';
 import 'package:miocard/data/datasources/stops_remote_datasource.dart';
 import 'package:miocard/domain/entities/stop_entity.dart';
 
@@ -22,8 +23,12 @@ const _stationsBody = '''
   "neighborhood":"Ciudad Los Alamos","commune":2,
   "longitude":-76.5133880103,"latitude":3.4842460459}]''';
 
-StopsRemoteDatasource _datasource(http.Client client) =>
-    StopsRemoteDatasource(client: client, backoff: Duration.zero);
+StopsRemoteDatasource _datasource(http.Client client, {JsonCache? cache}) =>
+    StopsRemoteDatasource(
+      client: client,
+      backoff: Duration.zero,
+      cache: cache ?? JsonCache.noop(),
+    );
 
 void main() {
   group('StopsRemoteDatasource', () {
@@ -209,6 +214,63 @@ void main() {
 
       expect(stops, hasLength(2));
       expect(stops.every((s) => s.hasPosition), isFalse);
+    });
+
+    test('serves the station catalog from cache on the second call',
+        () async {
+      var calls = 0;
+      final client = MockClient((_) async {
+        calls++;
+        return http.Response(_stationsBody, 200);
+      });
+      final cache = JsonCache();
+      final datasource = _datasource(client, cache: cache);
+
+      await datasource.getStations();
+      final second = await datasource.getStations();
+
+      expect(calls, 1);
+      expect(second.single.name, 'Estación Alamos');
+    });
+
+    test('reuses a stop position instead of asking again', () async {
+      var calls = 0;
+      final client = MockClient((request) async {
+        calls++;
+        final lat = double.parse(request.url.queryParameters['latitud']!);
+        final lon = double.parse(request.url.queryParameters['longitud']!);
+        const originLat = 3.4842;
+        const originLon = -76.5134;
+        const metresPerDegree = 111320.0;
+        final lonScale = metresPerDegree * math.cos(originLat * math.pi / 180);
+        final vantageY = (lat - originLat) * metresPerDegree;
+        final vantageX = (lon - originLon) * lonScale;
+        final distance = math.sqrt(
+          math.pow(30 - vantageX, 2) + math.pow(50 - vantageY, 2),
+        );
+        return http.Response(
+          '[{"idParada":"1","nombreParada":"Target","distanciaMetros":'
+          '$distance,"buses":[]}]',
+          200,
+        );
+      });
+      final cache = JsonCache();
+      final datasource = _datasource(client, cache: cache);
+
+      final first = await datasource.getLocatedStops(
+        latitude: 3.4842,
+        longitude: -76.5134,
+      );
+      expect(calls, 3);
+      expect(first.single.hasPosition, isTrue);
+
+      // The position is known now, so the vantage points are skipped.
+      final second = await datasource.getLocatedStops(
+        latitude: 3.4842,
+        longitude: -76.5134,
+      );
+      expect(calls, 4);
+      expect(second.single.hasPosition, isTrue);
     });
 
     test('parses the station catalog', () async {

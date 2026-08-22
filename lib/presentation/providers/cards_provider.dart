@@ -8,6 +8,8 @@ import 'package:share_plus/share_plus.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../domain/entities/card_entity.dart';
+import '../../domain/entities/stop_entity.dart';
+import 'stops_provider.dart';
 import '../../data/datasources/card_remote_datasource.dart';
 import '../../data/repositories/card_repository_impl.dart';
 import '../../domain/repositories/card_repository.dart';
@@ -235,16 +237,18 @@ class CardsNotifier extends Notifier<CardsState> {
   /// Export all cards to JSON file and share
   Future<bool> exportCards() async {
     try {
-      if (state.cards.isEmpty) {
-        state = state.copyWith(error: 'No hay tarjetas para exportar');
+      final stops = ref.read(stopsProvider).favorites;
+
+      if (state.cards.isEmpty && stops.isEmpty) {
+        state = state.copyWith(error: 'No hay datos para exportar');
         return false;
       }
 
-      final cardsJson = state.cards.map((c) => c.toJson()).toList();
       final exportData = {
-        'version': 1,
+        'version': 2,
         'exportDate': DateTime.now().toIso8601String(),
-        'cards': cardsJson,
+        'cards': state.cards.map((c) => c.toJson()).toList(),
+        'favoriteStops': stops.map((s) => s.toJson()).toList(),
       };
 
       final jsonString = const JsonEncoder.withIndent('  ').convert(exportData);
@@ -283,7 +287,9 @@ class CardsNotifier extends Notifier<CardsState> {
       final jsonString = await file.readAsString();
       final data = json.decode(jsonString) as Map<String, dynamic>;
 
-      final cardsList = data['cards'] as List<dynamic>;
+      // Version 1 backups only carried the cards.
+      final cardsList = data['cards'] as List<dynamic>? ?? const [];
+      final stopsList = data['favoriteStops'] as List<dynamic>? ?? const [];
       int importedCount = 0;
 
       for (final cardJson in cardsList) {
@@ -298,6 +304,13 @@ class CardsNotifier extends Notifier<CardsState> {
           importedCount++;
         }
       }
+
+      importedCount += await ref.read(stopsProvider.notifier).importFavorites(
+            stopsList
+                .whereType<Map<String, dynamic>>()
+                .map(FavoriteStop.fromJson)
+                .toList(growable: false),
+          );
 
       await loadCards();
       return importedCount;

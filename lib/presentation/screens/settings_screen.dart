@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import '../../core/theme/app_theme.dart';
 import '../../l10n/app_localizations.dart';
 import '../providers/settings_provider.dart';
 import '../providers/cards_provider.dart';
@@ -351,6 +352,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 }
 
+/// Indigo reads too dark on the dark background, so lighten it there
+Color _accentOf(ThemeData theme) {
+  return theme.brightness == Brightness.dark
+      ? AppColors.primaryLight
+      : AppColors.primary;
+}
+
 class _SectionHeader extends StatelessWidget {
   final String title;
 
@@ -362,7 +370,7 @@ class _SectionHeader extends StatelessWidget {
     return Text(
       title,
       style: theme.textTheme.titleSmall?.copyWith(
-        color: theme.colorScheme.primary,
+        color: _accentOf(theme),
         fontWeight: FontWeight.bold,
         letterSpacing: 0.5,
       ),
@@ -419,17 +427,24 @@ class _ThemeOption extends StatelessWidget {
         height: 40,
         decoration: BoxDecoration(
           color: isSelected
-              ? colorScheme.primaryContainer
+              ? _accentOf(theme).withValues(alpha: 0.18)
               : colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Icon(
           icon,
-          color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
+          color:
+              isSelected ? _accentOf(theme) : colorScheme.onSurfaceVariant,
           size: 20,
         ),
       ),
-      title: Text(title),
+      title: Text(
+        title,
+        style: theme.textTheme.bodyLarge?.copyWith(
+          color: colorScheme.onSurface,
+          fontWeight: isSelected ? FontWeight.bold : null,
+        ),
+      ),
       subtitle: Text(
         subtitle,
         style: theme.textTheme.bodySmall?.copyWith(
@@ -437,7 +452,7 @@ class _ThemeOption extends StatelessWidget {
         ),
       ),
       trailing: isSelected
-          ? Icon(Icons.check_circle_rounded, color: colorScheme.primary)
+          ? Icon(Icons.check_circle_rounded, color: _accentOf(theme))
           : null,
       onTap: onTap,
     );

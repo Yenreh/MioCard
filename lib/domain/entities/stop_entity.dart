@@ -100,6 +100,28 @@ class FavoriteStop {
   String? get secondaryName =>
       customName?.isNotEmpty == true ? name : null;
 
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'name': name,
+        'customName': customName,
+        'stopId': stopId,
+        'anchorLatitude': anchorLatitude,
+        'anchorLongitude': anchorLongitude,
+        'position': position,
+      };
+
+  factory FavoriteStop.fromJson(Map<String, dynamic> json) {
+    return FavoriteStop(
+      id: json['id'] as String,
+      name: json['name'] as String,
+      customName: json['customName'] as String?,
+      stopId: json['stopId'] as String?,
+      anchorLatitude: (json['anchorLatitude'] as num).toDouble(),
+      anchorLongitude: (json['anchorLongitude'] as num).toDouble(),
+      position: (json['position'] as num?)?.toInt() ?? 0,
+    );
+  }
+
   FavoriteStop copyWith({
     String? name,
     int? position,

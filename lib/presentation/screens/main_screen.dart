@@ -230,7 +230,7 @@ class _MainScreenState extends ConsumerState<MainScreen>
           ],
         ),
       ),
-      floatingActionButton: _ManageFab(l10n: l10n),
+      floatingActionButton: _ManageButtons(l10n: l10n),
     );
   }
 }
@@ -271,111 +271,31 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-/// Button that unfolds into the cards and the stops screens
-class _ManageFab extends StatefulWidget {
+/// The two management screens, always in reach
+class _ManageButtons extends StatelessWidget {
   final AppLocalizations l10n;
 
-  const _ManageFab({required this.l10n});
-
-  @override
-  State<_ManageFab> createState() => _ManageFabState();
-}
-
-class _ManageFabState extends State<_ManageFab> {
-  bool _open = false;
-
-  void _go(String route) {
-    setState(() => _open = false);
-    context.push(route);
-  }
+  const _ManageButtons({required this.l10n});
 
   @override
   Widget build(BuildContext context) {
-    final l10n = widget.l10n;
-
-    return Column(
+    return Row(
       mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
-        _FabAction(
-          visible: _open,
-          icon: Icons.signpost_rounded,
-          label: l10n.favoriteStops,
-          onPressed: () => _go('/stops'),
-        ),
-        _FabAction(
-          visible: _open,
-          icon: Icons.credit_card_rounded,
-          label: l10n.myCards,
-          onPressed: () => _go('/cards'),
-        ),
         FloatingActionButton(
-          onPressed: () => setState(() => _open = !_open),
-          tooltip: _open ? l10n.cancel : l10n.manageCards,
-          child: AnimatedRotation(
-            turns: _open ? 0.125 : 0,
-            duration: const Duration(milliseconds: 200),
-            child: const Icon(Icons.add_rounded),
-          ),
+          heroTag: 'manage-cards',
+          onPressed: () => context.push('/cards'),
+          tooltip: l10n.myCards,
+          child: const Icon(Icons.credit_card_rounded),
+        ),
+        const SizedBox(width: 12),
+        FloatingActionButton(
+          heroTag: 'manage-stops',
+          onPressed: () => context.push('/stops'),
+          tooltip: l10n.favoriteStops,
+          child: const Icon(Icons.signpost_rounded),
         ),
       ],
-    );
-  }
-}
-
-/// One of the choices that appear above the button
-class _FabAction extends StatelessWidget {
-  final bool visible;
-  final IconData icon;
-  final String label;
-  final VoidCallback onPressed;
-
-  const _FabAction({
-    required this.visible,
-    required this.icon,
-    required this.label,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-
-    return AnimatedSlide(
-      offset: visible ? Offset.zero : const Offset(0, 0.4),
-      duration: const Duration(milliseconds: 200),
-      child: AnimatedOpacity(
-        opacity: visible ? 1 : 0,
-        duration: const Duration(milliseconds: 200),
-        child: IgnorePointer(
-          ignoring: !visible,
-          child: Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Card(
-                  color: theme.colorScheme.surfaceContainerHighest,
-                  margin: EdgeInsets.zero,
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    child: Text(label, style: theme.textTheme.labelLarge),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                FloatingActionButton.small(
-                  heroTag: label,
-                  onPressed: onPressed,
-                  child: Icon(icon),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

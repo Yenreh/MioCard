@@ -128,7 +128,7 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
             action: SnackBarAction(
               label: l10n.retry,
               textColor: Colors.white,
-              onPressed: notifier.refreshArrivals,
+              onPressed: () => notifier.refreshArrivals(force: true),
             ),
           ),
         );
@@ -158,7 +158,7 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
             IconButton(
               icon: const Icon(Icons.refresh_rounded),
               tooltip: l10n.retry,
-              onPressed: notifier.refreshArrivals,
+              onPressed: () => notifier.refreshArrivals(force: true),
             ),
         ],
       ),
@@ -167,7 +167,7 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
           : state.favorites.isEmpty
               ? _EmptyState(l10n: l10n)
               : RefreshIndicator(
-                  onRefresh: notifier.refreshArrivals,
+                  onRefresh: () => notifier.refreshArrivals(force: true),
                   child: ListView.separated(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 96),
                     itemCount: state.favorites.length,

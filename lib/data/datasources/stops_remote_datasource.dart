@@ -6,6 +6,7 @@ import 'package:http/http.dart' as http;
 
 import '../../domain/entities/stop_entity.dart';
 import 'api_exception.dart';
+import 'json_cache.dart';
 
 /// Remote data source for stops, arrivals and the station catalog.
 class StopsRemoteDatasource {
@@ -22,14 +23,29 @@ class StopsRemoteDatasource {
   static const Duration _requestTimeout = Duration(seconds: 10);
   static const int _maxAttempts = 2;
 
+  /// The catalog changes a few times a year at most
+  static const Duration _stationsMaxAge = Duration(days: 7);
+
+  /// Which lines serve a stop is stable too
+  static const Duration _linesMaxAge = Duration(days: 30);
+
+  static const String _positionsKey = 'stop_positions';
+
   final http.Client _client;
   final Duration _backoff;
+  final JsonCache _cache;
+
+  /// Stop positions worked out earlier: a stop never moves, so they are
+  /// kept for good and spare the extra lookups.
+  Map<String, List<double>>? _positions;
 
   StopsRemoteDatasource({
     http.Client? client,
     Duration backoff = const Duration(milliseconds: 600),
+    JsonCache? cache,
   })  : _client = client ?? http.Client(),
-        _backoff = backoff;
+        _backoff = backoff,
+        _cache = cache ?? JsonCache();
 
   /// Stops within [radiusMeters] of a position, each with its next buses.
   Future<List<NearbyStop>> getNearbyStops({
@@ -83,7 +99,11 @@ class StopsRemoteDatasource {
 
   /// The full MIO station catalog, used to add favorites without GPS.
   Future<List<Station>> getStations() async {
-    final decoded = await _getJson(Uri.parse(_stationsUrl));
+    var decoded = await _cache.read('stations', maxAge: _stationsMaxAge);
+    if (decoded == null) {
+      decoded = await _getJson(Uri.parse(_stationsUrl));
+      if (decoded is List) await _cache.write('stations', decoded);
+    }
 
     if (decoded is! List) {
       throw const ServerApiException('Unexpected stations response');
@@ -122,6 +142,17 @@ class StopsRemoteDatasource {
       longitude: longitude,
     );
 
+    final known = await _knownPositions();
+    final placed = [
+      for (final stop in origin)
+        if (known[stop.id] case final position?)
+          stop.withPosition(position[0], position[1])
+        else
+          stop,
+    ];
+    // Every stop here has been placed before: no extra requests needed.
+    if (placed.every((s) => s.hasPosition)) return placed;
+
     final List<List<NearbyStop>> extras;
     try {
       extras = await Future.wait([
@@ -136,13 +167,15 @@ class StopsRemoteDatasource {
       ]);
     } on ApiException {
       // Placing the stops is a bonus: keep the list even without it.
-      return origin;
+      return placed;
     }
 
     final north = {for (final s in extras[0]) s.id: s.distanceMeters};
     final east = {for (final s in extras[1]) s.id: s.distanceMeters};
 
-    return origin.map((stop) {
+    final located = placed.map((stop) {
+      if (stop.hasPosition) return stop;
+
       final dNorth = north[stop.id];
       final dEast = east[stop.id];
       if (dNorth == null || dEast == null) return stop;
@@ -161,6 +194,38 @@ class StopsRemoteDatasource {
         longitude + point.x / lonScale,
       );
     }).toList(growable: false);
+
+    await _rememberPositions(located);
+    return located;
+  }
+
+  Future<Map<String, List<double>>> _knownPositions() async {
+    if (_positions != null) return _positions!;
+
+    final cached = await _cache.read(_positionsKey);
+    _positions = {
+      if (cached is Map)
+        for (final entry in cached.entries)
+          if (entry.value is List && (entry.value as List).length == 2)
+            entry.key.toString(): [
+              (entry.value as List)[0] as double,
+              (entry.value as List)[1] as double,
+            ],
+    };
+    return _positions!;
+  }
+
+  Future<void> _rememberPositions(List<NearbyStop> stops) async {
+    final positions = await _knownPositions();
+    var added = false;
+
+    for (final stop in stops) {
+      if (!stop.hasPosition || positions.containsKey(stop.id)) continue;
+      positions[stop.id] = [stop.latitude!, stop.longitude!];
+      added = true;
+    }
+
+    if (added) await _cache.write(_positionsKey, positions);
   }
 
   /// Metres per degree of latitude, close enough over a few hundred metres
@@ -200,7 +265,12 @@ class StopsRemoteDatasource {
 
   /// Lines serving a stop, useful when no bus is on its way
   Future<List<StopLine>> getLinesByStop(String stopId) async {
-    final decoded = await _getJson(Uri.parse('$_linesByStopUrl/$stopId'));
+    final key = 'lines_$stopId';
+    var decoded = await _cache.read(key, maxAge: _linesMaxAge);
+    if (decoded == null) {
+      decoded = await _getJson(Uri.parse('$_linesByStopUrl/$stopId'));
+      if (decoded is List) await _cache.write(key, decoded);
+    }
 
     if (decoded is! List) {
       throw const ServerApiException('Unexpected lines response');

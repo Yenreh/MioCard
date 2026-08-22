@@ -53,12 +53,21 @@ class StopsState {
 
 /// Favorite stops and their upcoming buses
 class StopsNotifier extends Notifier<StopsState> {
-  /// The arrivals service takes one request per stop, so keep a few in
+  /// The arrivals service takes one request per point, so keep a few in
   /// flight at a time instead of firing all of them at once.
   static const int _maxConcurrentRequests = 4;
   static const Duration autoRefreshInterval = Duration(seconds: 30);
 
+  /// One request covers every stop within 300 m of the point it asks
+  /// about, so favorites saved from nearly the same place share it.
+  static const double _clusterRadiusMetres = 30;
+
+  /// Arrivals move slowly enough that answering twice in a few seconds
+  /// only wastes data.
+  static const Duration _minRefreshGap = Duration(seconds: 15);
+
   Timer? _timer;
+  DateTime? _lastRefresh;
 
   StopsRepository get _repository => ref.read(stopsRepositoryProvider);
 
@@ -129,21 +138,46 @@ class StopsNotifier extends Notifier<StopsState> {
     }
   }
 
-  /// Refresh the arrivals of every saved stop
-  Future<void> refreshArrivals() async {
+  /// Refresh the arrivals of every saved stop.
+  ///
+  /// Favorites anchored to nearly the same place are answered by a
+  /// single request; a stop the shared answer does not mention is asked
+  /// for on its own.
+  Future<void> refreshArrivals({bool force = false}) async {
     if (state.isRefreshing || state.favorites.isEmpty) return;
+
+    final last = _lastRefresh;
+    if (!force &&
+        last != null &&
+        DateTime.now().difference(last) < _minRefreshGap) {
+      return;
+    }
 
     state = state.copyWith(isRefreshing: true, clearError: true);
 
     final results = Map<String, List<BusArrival>>.from(state.arrivals);
+    final clusters = _clusterFavorites(state.favorites);
     ApiException? failure;
 
-    for (var i = 0; i < state.favorites.length; i += _maxConcurrentRequests) {
-      final batch = state.favorites.skip(i).take(_maxConcurrentRequests);
+    for (var i = 0; i < clusters.length; i += _maxConcurrentRequests) {
+      final batch = clusters.skip(i).take(_maxConcurrentRequests);
       await Future.wait(
-        batch.map((stop) async {
+        batch.map((cluster) async {
           try {
-            results[stop.id] = await _repository.getArrivals(stop);
+            final nearby = await _repository.getNearbyStops(
+              cluster.first.anchorLatitude,
+              cluster.first.anchorLongitude,
+            );
+
+            for (final favorite in cluster) {
+              final arrivals = _arrivalsFor(favorite, nearby);
+              if (arrivals != null) {
+                results[favorite.id] = arrivals;
+              } else {
+                // Out of range of the shared point: ask on its own.
+                results[favorite.id] = await _repository.getArrivals(favorite);
+              }
+            }
           } on ApiException catch (e) {
             failure ??= e;
           }
@@ -151,6 +185,7 @@ class StopsNotifier extends Notifier<StopsState> {
       );
     }
 
+    _lastRefresh = DateTime.now();
     state = state.copyWith(
       arrivals: results,
       isRefreshing: false,
@@ -158,6 +193,49 @@ class StopsNotifier extends Notifier<StopsState> {
       lastUpdated: DateTime.now(),
       clearError: failure == null,
     );
+  }
+
+  /// Group favorites that a single request can answer together
+  List<List<FavoriteStop>> _clusterFavorites(List<FavoriteStop> stops) {
+    final clusters = <List<FavoriteStop>>[];
+
+    for (final stop in stops) {
+      final match = clusters.where((cluster) {
+        final head = cluster.first;
+        return Geolocator.distanceBetween(
+              head.anchorLatitude,
+              head.anchorLongitude,
+              stop.anchorLatitude,
+              stop.anchorLongitude,
+            ) <=
+            _clusterRadiusMetres;
+      }).firstOrNull;
+
+      if (match != null) {
+        match.add(stop);
+      } else {
+        clusters.add([stop]);
+      }
+    }
+
+    return clusters;
+  }
+
+  /// Arrivals for [favorite] inside a shared answer, or null when that
+  /// answer does not cover it
+  List<BusArrival>? _arrivalsFor(
+    FavoriteStop favorite,
+    List<NearbyStop> nearby,
+  ) {
+    if (favorite.isArea) {
+      return nearby.expand((s) => s.arrivals).toList()
+        ..sort((a, b) => a.arrivalTime.compareTo(b.arrivalTime));
+    }
+
+    for (final stop in nearby) {
+      if (stop.id == favorite.stopId) return stop.arrivals;
+    }
+    return null;
   }
 
   /// Save a stop, or an area when [stopId] is null
@@ -180,6 +258,21 @@ class StopsNotifier extends Notifier<StopsState> {
       ),
     );
     await loadFavorites();
+  }
+
+  /// Restore stops from a backup, skipping the ones already saved
+  Future<int> importFavorites(List<FavoriteStop> stops) async {
+    var imported = 0;
+    final existing = {for (final s in state.favorites) s.id};
+
+    for (final stop in stops) {
+      if (existing.contains(stop.id)) continue;
+      await _repository.addFavorite(stop);
+      imported++;
+    }
+
+    if (imported > 0) await loadFavorites();
+    return imported;
   }
 
   /// Give a stop a label of its own, or drop it when [customName] is empty
