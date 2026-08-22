@@ -3,7 +3,7 @@ import 'package:sqflite/sqflite.dart';
 
 /// Single SQLite database shared by every local data source.
 class AppDatabase {
-  static const int _version = 4;
+  static const int _version = 5;
   static Database? _database;
 
   static Future<Database> get instance async {
@@ -26,6 +26,12 @@ class AppDatabase {
         if (oldVersion < 4) {
           await db.execute(
             'ALTER TABLE favorite_stops ADD COLUMN custom_name TEXT',
+          );
+        }
+        if (oldVersion < 5) {
+          await db.execute(
+            'ALTER TABLE favorite_stops ADD COLUMN missing_count INTEGER '
+            'DEFAULT 0',
           );
         }
       },
@@ -56,7 +62,8 @@ class AppDatabase {
         anchor_longitude REAL NOT NULL,
         position INTEGER DEFAULT 0,
         stop_ref TEXT,
-        custom_name TEXT
+        custom_name TEXT,
+        missing_count INTEGER DEFAULT 0
       )
     ''');
   }

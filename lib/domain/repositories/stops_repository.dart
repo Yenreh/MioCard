@@ -20,9 +20,6 @@ abstract class StopsRepository {
   /// Stops around a position, with their upcoming buses
   Future<List<NearbyStop>> getNearbyStops(double latitude, double longitude);
 
-  /// Upcoming buses for a saved stop
-  Future<List<BusArrival>> getArrivals(FavoriteStop stop);
-
   /// MIO station catalog
   Future<List<Station>> getStations();
 

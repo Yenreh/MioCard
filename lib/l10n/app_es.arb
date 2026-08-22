@@ -173,5 +173,11 @@
   "stopDetails": "Detalles de la parada",
   "resetNorth": "Orientar al norte",
   "madeBy": "by Yenreh",
-  "licenses": "Licencias de código abierto"
+  "licenses": "Licencias de código abierto",
+  "stopNotReported": "El servicio ya no reporta esta parada",
+  "relinkStop": "Vincular a otra parada",
+  "cache": "Datos en caché",
+  "cacheDesc": "Estaciones, rutas y posiciones de paradas",
+  "clearCache": "Borrar",
+  "cacheCleared": "Caché borrada"
 }

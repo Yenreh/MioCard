@@ -173,5 +173,11 @@
   "stopDetails": "Stop details",
   "resetNorth": "Face north",
   "madeBy": "by Yenreh",
-  "licenses": "Open source licenses"
+  "licenses": "Open source licenses",
+  "stopNotReported": "This stop is no longer reported",
+  "relinkStop": "Link to another stop",
+  "cache": "Cached data",
+  "cacheDesc": "Stations, lines and stop positions",
+  "clearCache": "Clear",
+  "cacheCleared": "Cached data cleared"
 }

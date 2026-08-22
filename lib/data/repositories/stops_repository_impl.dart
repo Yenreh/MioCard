@@ -41,10 +41,6 @@ class StopsRepositoryImpl implements StopsRepository {
   }
 
   @override
-  Future<List<BusArrival>> getArrivals(FavoriteStop stop) =>
-      _remoteDatasource.getArrivalsForStop(stop);
-
-  @override
   Future<List<Station>> getStations() => _remoteDatasource.getStations();
 
   @override

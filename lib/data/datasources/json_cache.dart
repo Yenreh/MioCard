@@ -61,6 +61,51 @@ class JsonCache {
     }
   }
 
+  /// Total bytes the cache occupies on disk
+  Future<int> sizeInBytes() async {
+    try {
+      final directory = await _cacheDirectory();
+      var total = 0;
+      await for (final entry in directory.list()) {
+        if (entry is File) total += await entry.length();
+      }
+      return total;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  /// Throw away everything, on disk and in memory
+  Future<void> clear() async {
+    _memory.clear();
+    try {
+      final directory = await _cacheDirectory();
+      await for (final entry in directory.list()) {
+        if (entry is File) await entry.delete();
+      }
+    } catch (_) {
+      // Nothing to clear is a fine outcome.
+    }
+  }
+
+  /// Delete entries nobody has asked for in [maxAge].
+  ///
+  /// One file per stop would otherwise pile up for as long as the app is
+  /// installed, since every stop whose lines were looked up leaves one.
+  Future<void> prune({required Duration maxAge}) async {
+    try {
+      final directory = await _cacheDirectory();
+      final cutoff = DateTime.now().subtract(maxAge);
+      await for (final entry in directory.list()) {
+        if (entry is! File) continue;
+        final modified = await entry.lastModified();
+        if (modified.isBefore(cutoff)) await entry.delete();
+      }
+    } catch (_) {
+      // Pruning is housekeeping: failing to do it changes nothing.
+    }
+  }
+
   bool _isStale(DateTime savedAt, Duration? maxAge) {
     if (maxAge == null) return false;
     return DateTime.now().difference(savedAt) > maxAge;

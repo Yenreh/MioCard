@@ -80,6 +80,64 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
     await _notifier.renameFavorite(stop.id, name);
   }
 
+  /// Let the user pick the stop that replaced a missing favorite
+  Future<void> _relink(FavoriteStop stop) async {
+    final l10n = AppLocalizations.of(context)!;
+    final point = (
+      latitude: stop.anchorLatitude,
+      longitude: stop.anchorLongitude,
+    );
+
+    final chosen = await showModalBottomSheet<NearbyStop>(
+      context: context,
+      isScrollControlled: true,
+      showDragHandle: true,
+      builder: (sheetContext) => Consumer(
+        builder: (context, ref, _) {
+          final nearby = ref.watch(stopsAtPointProvider(point));
+
+          return SafeArea(
+            child: nearby.when(
+              loading: () => const Padding(
+                padding: EdgeInsets.all(32),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+              error: (_, _) => Padding(
+                padding: const EdgeInsets.all(32),
+                child: Text(l10n.couldNotLoadArrivals),
+              ),
+              data: (stops) => stops.isEmpty
+                  ? Padding(
+                      padding: const EdgeInsets.all(32),
+                      child: Text(l10n.noStopsNearby),
+                    )
+                  : ListView(
+                      shrinkWrap: true,
+                      children: [
+                        for (final candidate in stops)
+                          ListTile(
+                            leading: const Icon(Icons.signpost_rounded),
+                            title: Text(candidate.name),
+                            subtitle: Text(
+                              l10n.metersAway(
+                                candidate.distanceMeters.round(),
+                              ),
+                            ),
+                            onTap: () =>
+                                Navigator.of(sheetContext).pop(candidate),
+                          ),
+                      ],
+                    ),
+            ),
+          );
+        },
+      ),
+    );
+
+    if (chosen == null) return;
+    await _notifier.relinkFavorite(stop.id, chosen);
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -150,6 +208,8 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
                         l10n: l10n,
                         onRemove: () => notifier.removeFavorite(stop.id),
                         onRename: () => _rename(stop),
+                        onRelink:
+                            stop.looksGone ? () => _relink(stop) : null,
                       );
                     },
                   ),

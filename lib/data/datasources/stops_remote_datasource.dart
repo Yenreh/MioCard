@@ -31,6 +31,15 @@ class StopsRemoteDatasource {
 
   static const String _positionsKey = 'stop_positions';
 
+  /// Cali has a bit over a thousand stops, so this holds every one the
+  /// user could plausibly meet while never growing without end.
+  static const int _maxStoredPositions = 1500;
+
+  /// Files nobody has read in this long are swept once per run
+  static const Duration _cacheLifetime = Duration(days: 45);
+
+  static bool _pruned = false;
+
   final http.Client _client;
   final Duration _backoff;
   final JsonCache _cache;
@@ -45,7 +54,12 @@ class StopsRemoteDatasource {
     JsonCache? cache,
   })  : _client = client ?? http.Client(),
         _backoff = backoff,
-        _cache = cache ?? JsonCache();
+        _cache = cache ?? JsonCache() {
+    if (!_pruned) {
+      _pruned = true;
+      unawaited(_cache.prune(maxAge: _cacheLifetime));
+    }
+  }
 
   /// Stops within [radiusMeters] of a position, each with its next buses.
   Future<List<NearbyStop>> getNearbyStops({
@@ -72,29 +86,6 @@ class StopsRemoteDatasource {
         .whereType<Map<String, dynamic>>()
         .map(_parseStop)
         .toList(growable: false);
-  }
-
-  /// Upcoming buses for a saved favorite, queried around its anchor.
-  ///
-  /// An area favorite gathers every stop around the anchor, which is how
-  /// a station with several platforms reports all of its arrivals.
-  Future<List<BusArrival>> getArrivalsForStop(FavoriteStop stop) async {
-    final stops = await getNearbyStops(
-      latitude: stop.anchorLatitude,
-      longitude: stop.anchorLongitude,
-    );
-
-    if (stop.isArea) {
-      final arrivals = stops.expand((s) => s.arrivals).toList()
-        ..sort((a, b) => a.arrivalTime.compareTo(b.arrivalTime));
-      return arrivals;
-    }
-
-    for (final nearby in stops) {
-      if (nearby.id == stop.stopId) return nearby.arrivals;
-    }
-    // The stop is reachable but has no buses coming right now.
-    return const [];
   }
 
   /// The full MIO station catalog, used to add favorites without GPS.
@@ -225,7 +216,12 @@ class StopsRemoteDatasource {
       added = true;
     }
 
-    if (added) await _cache.write(_positionsKey, positions);
+    if (!added) return;
+
+    while (positions.length > _maxStoredPositions) {
+      positions.remove(positions.keys.first);
+    }
+    await _cache.write(_positionsKey, positions);
   }
 
   /// Metres per degree of latitude, close enough over a few hundred metres

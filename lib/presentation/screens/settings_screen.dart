@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
 import '../../core/theme/app_theme.dart';
+import '../../data/datasources/json_cache.dart';
 import '../../l10n/app_localizations.dart';
 import '../providers/settings_provider.dart';
 import '../providers/cards_provider.dart';
@@ -19,6 +20,8 @@ class SettingsScreen extends ConsumerStatefulWidget {
 class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   final _farePriceController = TextEditingController();
   String _appVersion = '';
+  final _cache = JsonCache();
+  int _cacheBytes = 0;
 
   @override
   void initState() {
@@ -26,6 +29,24 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     final settings = ref.read(settingsProvider);
     _farePriceController.text = settings.farePrice.toString();
     _loadAppVersion();
+    _loadCacheSize();
+  }
+
+  Future<void> _loadCacheSize() async {
+    final bytes = await _cache.sizeInBytes();
+    if (mounted) setState(() => _cacheBytes = bytes);
+  }
+
+  Future<void> _clearCache(AppLocalizations l10n) async {
+    final messenger = ScaffoldMessenger.of(context);
+    await _cache.clear();
+    await _loadCacheSize();
+    messenger.showSnackBar(
+      SnackBar(
+        content: Text(l10n.cacheCleared),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
   }
 
   Future<void> _loadAppVersion() async {
@@ -246,6 +267,14 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                   subtitle: l10n.exportDataDesc,
                   icon: Icons.upload_rounded,
                   onTap: () => _handleExport(context, cardsNotifier, l10n),
+                ),
+                const Divider(height: 1),
+                _ActionTile(
+                  title: l10n.cache,
+                  subtitle: '${l10n.cacheDesc} · '
+                      '${(_cacheBytes / 1024).toStringAsFixed(0)} KB',
+                  icon: Icons.cleaning_services_rounded,
+                  onTap: () => _clearCache(l10n),
                 ),
                 const Divider(height: 1),
                 _ActionTile(

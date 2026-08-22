@@ -14,6 +14,9 @@ class FavoriteStopCard extends StatelessWidget {
   /// Renaming lives in the stops screen too; null hides the action
   final VoidCallback? onRename;
 
+  /// Offered when the stop went missing; null hides the action
+  final VoidCallback? onRelink;
+
   const FavoriteStopCard({
     super.key,
     required this.stop,
@@ -21,6 +24,7 @@ class FavoriteStopCard extends StatelessWidget {
     required this.l10n,
     this.onRemove,
     this.onRename,
+    this.onRelink,
   });
 
   @override
@@ -82,6 +86,32 @@ class FavoriteStopCard extends StatelessWidget {
                 ),
             ],
           ),
+          if (stop.looksGone) ...[
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                Icon(
+                  Icons.report_problem_rounded,
+                  size: 14,
+                  color: colorScheme.error,
+                ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Text(
+                    l10n.stopNotReported,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: colorScheme.error,
+                    ),
+                  ),
+                ),
+                if (onRelink != null)
+                  TextButton(
+                    onPressed: onRelink,
+                    child: Text(l10n.relinkStop),
+                  ),
+              ],
+            ),
+          ],
           const SizedBox(height: 8),
           if (list == null)
             const Padding(

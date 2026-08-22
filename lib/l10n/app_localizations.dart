@@ -847,6 +847,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open source licenses'**
   String get licenses;
+
+  /// No description provided for @stopNotReported.
+  ///
+  /// In en, this message translates to:
+  /// **'This stop is no longer reported'**
+  String get stopNotReported;
+
+  /// No description provided for @relinkStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Link to another stop'**
+  String get relinkStop;
+
+  /// No description provided for @cache.
+  ///
+  /// In en, this message translates to:
+  /// **'Cached data'**
+  String get cache;
+
+  /// No description provided for @cacheDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Stations, lines and stop positions'**
+  String get cacheDesc;
+
+  /// No description provided for @clearCache.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get clearCache;
+
+  /// No description provided for @cacheCleared.
+  ///
+  /// In en, this message translates to:
+  /// **'Cached data cleared'**
+  String get cacheCleared;
 }
 
 class _AppLocalizationsDelegate

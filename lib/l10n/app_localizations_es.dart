@@ -425,4 +425,22 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get licenses => 'Licencias de código abierto';
+
+  @override
+  String get stopNotReported => 'El servicio ya no reporta esta parada';
+
+  @override
+  String get relinkStop => 'Vincular a otra parada';
+
+  @override
+  String get cache => 'Datos en caché';
+
+  @override
+  String get cacheDesc => 'Estaciones, rutas y posiciones de paradas';
+
+  @override
+  String get clearCache => 'Borrar';
+
+  @override
+  String get cacheCleared => 'Caché borrada';
 }

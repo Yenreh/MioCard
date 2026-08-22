@@ -417,4 +417,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get licenses => 'Open source licenses';
+
+  @override
+  String get stopNotReported => 'This stop is no longer reported';
+
+  @override
+  String get relinkStop => 'Link to another stop';
+
+  @override
+  String get cache => 'Cached data';
+
+  @override
+  String get cacheDesc => 'Stations, lines and stop positions';
+
+  @override
+  String get clearCache => 'Clear';
+
+  @override
+  String get cacheCleared => 'Cached data cleared';
 }

@@ -76,6 +76,11 @@ class FavoriteStop {
   final double anchorLongitude;
   final int position;
 
+  /// How many times in a row the service answered without mentioning
+  /// this stop. A stop that is retired, renumbered or moved out of range
+  /// looks exactly like one with no buses coming, so it is counted.
+  final int missingCount;
+
   /// Stop to follow. When null the favorite covers an area and gathers
   /// the arrivals of every stop around the anchor, which is what a
   /// station with several platforms needs.
@@ -89,9 +94,15 @@ class FavoriteStop {
     required this.anchorLongitude,
     this.position = 0,
     this.stopId,
+    this.missingCount = 0,
   });
 
   bool get isArea => stopId == null;
+
+  /// Missed often enough that something has changed on the service side
+  bool get looksGone => missingCount >= missingThreshold;
+
+  static const int missingThreshold = 3;
 
   /// What to show as the title
   String get displayName => customName?.isNotEmpty == true ? customName! : name;
@@ -126,6 +137,8 @@ class FavoriteStop {
     String? name,
     int? position,
     String? customName,
+    String? stopId,
+    int? missingCount,
     bool clearCustomName = false,
   }) {
     return FavoriteStop(
@@ -135,7 +148,8 @@ class FavoriteStop {
       anchorLatitude: anchorLatitude,
       anchorLongitude: anchorLongitude,
       position: position ?? this.position,
-      stopId: stopId,
+      stopId: stopId ?? this.stopId,
+      missingCount: missingCount ?? this.missingCount,
     );
   }
 }

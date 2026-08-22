@@ -59,6 +59,7 @@ class StopsLocalDatasource {
       position: (row['position'] as num?)?.toInt() ?? 0,
       stopId: row['stop_ref'] as String?,
       customName: row['custom_name'] as String?,
+      missingCount: (row['missing_count'] as num?)?.toInt() ?? 0,
     );
   }
 
@@ -71,6 +72,7 @@ class StopsLocalDatasource {
       'position': stop.position,
       'stop_ref': stop.stopId,
       'custom_name': stop.customName,
+      'missing_count': stop.missingCount,
     };
   }
 }

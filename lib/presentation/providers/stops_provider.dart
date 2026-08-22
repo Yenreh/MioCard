@@ -159,40 +159,118 @@ class StopsNotifier extends Notifier<StopsState> {
     final clusters = _clusterFavorites(state.favorites);
     ApiException? failure;
 
+    final healed = <String, FavoriteStop>{};
+
     for (var i = 0; i < clusters.length; i += _maxConcurrentRequests) {
       final batch = clusters.skip(i).take(_maxConcurrentRequests);
       await Future.wait(
         batch.map((cluster) async {
           try {
-            final nearby = await _repository.getNearbyStops(
+            var nearby = await _repository.getNearbyStops(
               cluster.first.anchorLatitude,
               cluster.first.anchorLongitude,
             );
 
             for (final favorite in cluster) {
-              final arrivals = _arrivalsFor(favorite, nearby);
-              if (arrivals != null) {
-                results[favorite.id] = arrivals;
-              } else {
-                // Out of range of the shared point: ask on its own.
-                results[favorite.id] = await _repository.getArrivals(favorite);
+              var arrivals = _arrivalsFor(favorite, nearby);
+              var seen = nearby;
+
+              // Only worth asking again when the favorite is anchored
+              // somewhere else: the same point gives the same answer.
+              final elsewhere = Geolocator.distanceBetween(
+                    cluster.first.anchorLatitude,
+                    cluster.first.anchorLongitude,
+                    favorite.anchorLatitude,
+                    favorite.anchorLongitude,
+                  ) >
+                  1;
+
+              if (arrivals == null && elsewhere) {
+                seen = await _repository.getNearbyStops(
+                  favorite.anchorLatitude,
+                  favorite.anchorLongitude,
+                );
+                arrivals = _arrivalsFor(favorite, seen);
               }
+
+              results[favorite.id] = arrivals ?? const [];
+
+              final update = _reconcile(favorite, seen, found: arrivals != null);
+              if (update != null) healed[favorite.id] = update;
             }
           } on ApiException catch (e) {
+            // A failed request says nothing about the stops themselves.
             failure ??= e;
           }
         }),
       );
     }
 
+    for (final stop in healed.values) {
+      await _repository.updateFavorite(stop);
+    }
+
     _lastRefresh = DateTime.now();
     state = state.copyWith(
+      favorites: healed.isEmpty
+          ? state.favorites
+          : [
+              for (final stop in state.favorites) healed[stop.id] ?? stop,
+            ],
       arrivals: results,
       isRefreshing: false,
       error: failure,
       lastUpdated: DateTime.now(),
       clearError: failure == null,
     );
+  }
+
+  /// Keep a favorite in step with what the service reports.
+  ///
+  /// Names drift when Metrocali relabels a stop, and a stop that stops
+  /// being reported has probably been retired, renumbered or moved out
+  /// of reach: counting the misses tells that apart from a quiet stop
+  /// with no bus on the way.
+  FavoriteStop? _reconcile(
+    FavoriteStop favorite,
+    List<NearbyStop> nearby, {
+    required bool found,
+  }) {
+    if (!found) {
+      // An area is only gone when nothing at all answers around it.
+      if (favorite.isArea && nearby.isNotEmpty) return null;
+      return favorite.missingCount >= FavoriteStop.missingThreshold
+          ? null
+          : favorite.copyWith(missingCount: favorite.missingCount + 1);
+    }
+
+    final reportedName = favorite.isArea
+        ? favorite.name
+        : nearby.firstWhere((s) => s.id == favorite.stopId).name;
+
+    final nameChanged =
+        reportedName.isNotEmpty && reportedName != favorite.name;
+    if (!nameChanged && favorite.missingCount == 0) return null;
+
+    return favorite.copyWith(
+      name: nameChanged ? reportedName : favorite.name,
+      missingCount: 0,
+    );
+  }
+
+  /// Point a favorite at another stop, keeping its label and place
+  Future<void> relinkFavorite(String id, NearbyStop stop) async {
+    final favorite = state.favorites.where((s) => s.id == id).firstOrNull;
+    if (favorite == null) return;
+
+    await _repository.updateFavorite(
+      favorite.copyWith(
+        stopId: stop.id,
+        name: stop.name,
+        missingCount: 0,
+      ),
+    );
+    await loadFavorites();
   }
 
   /// Group favorites that a single request can answer together
