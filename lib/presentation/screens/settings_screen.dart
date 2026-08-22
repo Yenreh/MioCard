@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
+import '../../core/theme/app_theme.dart';
 import '../../l10n/app_localizations.dart';
 import '../providers/settings_provider.dart';
 import '../providers/cards_provider.dart';
@@ -97,6 +98,44 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
 
           const SizedBox(height: 24),
 
+          // Home screen section
+          _SectionHeader(title: l10n.homeScreen),
+          const SizedBox(height: 8),
+          _SettingsCard(
+            child: Column(
+              children: [
+                _ThemeOption(
+                  title: l10n.homeCardsOnly,
+                  subtitle: l10n.homeScreenDesc,
+                  icon: Icons.credit_card_rounded,
+                  isSelected: settings.homeContent == HomeContent.cards,
+                  onTap: () =>
+                      settingsNotifier.setHomeContent(HomeContent.cards),
+                ),
+                const Divider(height: 1),
+                _ThemeOption(
+                  title: l10n.homeStopsOnly,
+                  subtitle: l10n.homeScreenDesc,
+                  icon: Icons.signpost_rounded,
+                  isSelected: settings.homeContent == HomeContent.stops,
+                  onTap: () =>
+                      settingsNotifier.setHomeContent(HomeContent.stops),
+                ),
+                const Divider(height: 1),
+                _ThemeOption(
+                  title: l10n.homeBoth,
+                  subtitle: l10n.homeScreenDesc,
+                  icon: Icons.dashboard_rounded,
+                  isSelected: settings.homeContent == HomeContent.both,
+                  onTap: () =>
+                      settingsNotifier.setHomeContent(HomeContent.both),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 24),
+
           // Fare Section
           _SectionHeader(title: l10n.fare),
           const SizedBox(height: 8),
@@ -158,13 +197,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                             child: TextField(
                               controller: _farePriceController,
                               keyboardType: TextInputType.number,
-                              decoration: InputDecoration(
+                              decoration: const InputDecoration(
                                 hintText: '3200',
                                 prefixText: '\$ ',
                                 border: InputBorder.none,
                                 enabledBorder: InputBorder.none,
                                 focusedBorder: InputBorder.none,
-                                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                               ),
                             ),
                           ),
@@ -265,6 +304,28 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                               color: colorScheme.onSurfaceVariant,
                             ),
                           ),
+                          Text(
+                            l10n.madeBy,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          GestureDetector(
+                            onTap: () => showLicensePage(
+                              context: context,
+                              applicationName: 'MIOCard',
+                              applicationVersion: _appVersion,
+                              applicationLegalese: 'by Yenreh',
+                            ),
+                            child: Text(
+                              l10n.licenses,
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: _accentOf(theme),
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
                         ],
                       ),
                     ],
@@ -313,6 +374,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
   }
 }
 
+/// Indigo reads too dark on the dark background, so lighten it there
+Color _accentOf(ThemeData theme) {
+  return theme.brightness == Brightness.dark
+      ? AppColors.primaryLight
+      : AppColors.primary;
+}
+
 class _SectionHeader extends StatelessWidget {
   final String title;
 
@@ -321,12 +389,14 @@ class _SectionHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    // Section titles read as plain labels: the accent colour, indigo in
+    // both themes, is too close to the dark background to serve here.
     return Text(
-      title,
-      style: theme.textTheme.titleSmall?.copyWith(
-        color: theme.colorScheme.primary,
+      title.toUpperCase(),
+      style: theme.textTheme.labelMedium?.copyWith(
+        color: theme.colorScheme.onSurfaceVariant,
         fontWeight: FontWeight.bold,
-        letterSpacing: 0.5,
+        letterSpacing: 1.2,
       ),
     );
   }
@@ -381,17 +451,24 @@ class _ThemeOption extends StatelessWidget {
         height: 40,
         decoration: BoxDecoration(
           color: isSelected
-              ? colorScheme.primaryContainer
+              ? _accentOf(theme).withValues(alpha: 0.18)
               : colorScheme.surfaceContainerHighest,
           borderRadius: BorderRadius.circular(10),
         ),
         child: Icon(
           icon,
-          color: isSelected ? colorScheme.primary : colorScheme.onSurfaceVariant,
+          color:
+              isSelected ? _accentOf(theme) : colorScheme.onSurfaceVariant,
           size: 20,
         ),
       ),
-      title: Text(title),
+      title: Text(
+        title,
+        style: theme.textTheme.bodyLarge?.copyWith(
+          color: colorScheme.onSurface,
+          fontWeight: isSelected ? FontWeight.bold : null,
+        ),
+      ),
       subtitle: Text(
         subtitle,
         style: theme.textTheme.bodySmall?.copyWith(
@@ -399,7 +476,7 @@ class _ThemeOption extends StatelessWidget {
         ),
       ),
       trailing: isSelected
-          ? Icon(Icons.check_circle_rounded, color: colorScheme.primary)
+          ? Icon(Icons.check_circle_rounded, color: _accentOf(theme))
           : null,
       onTap: onTap,
     );

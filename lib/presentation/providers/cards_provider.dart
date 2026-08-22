@@ -8,6 +8,9 @@ import 'package:share_plus/share_plus.dart';
 import 'package:uuid/uuid.dart';
 
 import '../../domain/entities/card_entity.dart';
+import '../../domain/entities/stop_entity.dart';
+import 'stops_provider.dart';
+import '../../data/datasources/card_remote_datasource.dart';
 import '../../data/repositories/card_repository_impl.dart';
 import '../../domain/repositories/card_repository.dart';
 
@@ -22,6 +25,9 @@ class CardsState {
   final bool isLoading;
   final String? error;
   final String? refreshingCardId;
+  final bool isRefreshingAll;
+  final ApiException? refreshError;
+  final String? refreshFailedCardId;
   final CardEntity? cardToDelete;
   final bool showDeleteDialog;
   final bool isDeletingCard;
@@ -32,6 +38,9 @@ class CardsState {
     this.isLoading = false,
     this.error,
     this.refreshingCardId,
+    this.isRefreshingAll = false,
+    this.refreshError,
+    this.refreshFailedCardId,
     this.cardToDelete,
     this.showDeleteDialog = false,
     this.isDeletingCard = false,
@@ -43,12 +52,16 @@ class CardsState {
     bool? isLoading,
     String? error,
     String? refreshingCardId,
+    bool? isRefreshingAll,
+    ApiException? refreshError,
+    String? refreshFailedCardId,
     CardEntity? cardToDelete,
     bool? showDeleteDialog,
     bool? isDeletingCard,
     bool? lastRefreshSuccess,
     bool clearError = false,
     bool clearRefreshing = false,
+    bool clearRefreshError = false,
     bool clearCardToDelete = false,
   }) {
     return CardsState(
@@ -57,6 +70,12 @@ class CardsState {
       error: clearError ? null : (error ?? this.error),
       refreshingCardId:
           clearRefreshing ? null : (refreshingCardId ?? this.refreshingCardId),
+      isRefreshingAll: isRefreshingAll ?? this.isRefreshingAll,
+      refreshError:
+          clearRefreshError ? null : (refreshError ?? this.refreshError),
+      refreshFailedCardId: clearRefreshError
+          ? null
+          : (refreshFailedCardId ?? this.refreshFailedCardId),
       cardToDelete:
           clearCardToDelete ? null : (cardToDelete ?? this.cardToDelete),
       showDeleteDialog: showDeleteDialog ?? this.showDeleteDialog,
@@ -130,16 +149,22 @@ class CardsNotifier extends Notifier<CardsState> {
 
   /// Refresh card balance from API
   Future<void> refreshCardBalance(String cardId) async {
+    // Only one refresh at a time
+    if (state.refreshingCardId != null) return;
+
     // Find the card to get full entity with prefix/suffix
-    final card = state.cards.firstWhere(
-      (c) => c.id == cardId,
-      orElse: () => throw Exception('Card not found'),
-    );
+    final CardEntity card;
+    try {
+      card = state.cards.firstWhere((c) => c.id == cardId);
+    } catch (_) {
+      return; // Card no longer exists
+    }
 
     state = state.copyWith(
       refreshingCardId: cardId,
       lastRefreshSuccess: false,
       clearError: true,
+      clearRefreshError: true,
     );
     try {
       final balance = await _repository.refreshCardBalance(card);
@@ -147,9 +172,63 @@ class CardsNotifier extends Notifier<CardsState> {
           cardId, balance.balance, balance.balanceDate);
       await loadCards();
       state = state.copyWith(lastRefreshSuccess: true, clearRefreshing: true);
+    } on ApiException catch (e) {
+      // Keep the last known balance; flag the card as failed so the UI
+      // can show the stale data notice and a typed error message.
+      state = state.copyWith(
+        refreshError: e,
+        refreshFailedCardId: cardId,
+        clearRefreshing: true,
+      );
     } catch (e) {
       state = state.copyWith(error: e.toString(), clearRefreshing: true);
     }
+  }
+
+  /// Clear the last refresh error and failed card flag
+  void clearRefreshError() {
+    state = state.copyWith(clearRefreshError: true);
+  }
+
+  /// Refresh every card, one at a time so the service is not hammered
+  Future<void> refreshAllBalances() async {
+    if (state.isRefreshingAll || state.refreshingCardId != null) return;
+    if (state.cards.isEmpty) return;
+
+    state = state.copyWith(
+      isRefreshingAll: true,
+      lastRefreshSuccess: false,
+      clearError: true,
+      clearRefreshError: true,
+    );
+
+    ApiException? failure;
+    String? failedCardId;
+
+    for (final card in state.cards) {
+      try {
+        final balance = await _repository.refreshCardBalance(card);
+        await _repository.updateCardBalance(
+          card.id,
+          balance.balance,
+          balance.balanceDate,
+        );
+      } on ApiException catch (e) {
+        failure ??= e;
+        failedCardId ??= card.id;
+      } catch (e) {
+        failure ??= ApiException(e.toString());
+        failedCardId ??= card.id;
+      }
+    }
+
+    await loadCards();
+    state = state.copyWith(
+      isRefreshingAll: false,
+      refreshError: failure,
+      refreshFailedCardId: failedCardId,
+      lastRefreshSuccess: failure == null,
+    );
   }
 
   /// Show delete confirmation dialog
@@ -203,16 +282,18 @@ class CardsNotifier extends Notifier<CardsState> {
   /// Export all cards to JSON file and share
   Future<bool> exportCards() async {
     try {
-      if (state.cards.isEmpty) {
-        state = state.copyWith(error: 'No hay tarjetas para exportar');
+      final stops = ref.read(stopsProvider).favorites;
+
+      if (state.cards.isEmpty && stops.isEmpty) {
+        state = state.copyWith(error: 'No hay datos para exportar');
         return false;
       }
 
-      final cardsJson = state.cards.map((c) => c.toJson()).toList();
       final exportData = {
-        'version': 1,
+        'version': 2,
         'exportDate': DateTime.now().toIso8601String(),
-        'cards': cardsJson,
+        'cards': state.cards.map((c) => c.toJson()).toList(),
+        'favoriteStops': stops.map((s) => s.toJson()).toList(),
       };
 
       final jsonString = const JsonEncoder.withIndent('  ').convert(exportData);
@@ -251,7 +332,9 @@ class CardsNotifier extends Notifier<CardsState> {
       final jsonString = await file.readAsString();
       final data = json.decode(jsonString) as Map<String, dynamic>;
 
-      final cardsList = data['cards'] as List<dynamic>;
+      // Version 1 backups only carried the cards.
+      final cardsList = data['cards'] as List<dynamic>? ?? const [];
+      final stopsList = data['favoriteStops'] as List<dynamic>? ?? const [];
       int importedCount = 0;
 
       for (final cardJson in cardsList) {
@@ -266,6 +349,13 @@ class CardsNotifier extends Notifier<CardsState> {
           importedCount++;
         }
       }
+
+      importedCount += await ref.read(stopsProvider.notifier).importFavorites(
+            stopsList
+                .whereType<Map<String, dynamic>>()
+                .map(FavoriteStop.fromJson)
+                .toList(growable: false),
+          );
 
       await loadCards();
       return importedCount;

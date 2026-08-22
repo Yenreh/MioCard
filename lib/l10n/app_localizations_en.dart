@@ -256,4 +256,165 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get balanceUpdated => 'Balance updated';
+
+  @override
+  String get retry => 'Retry';
+
+  @override
+  String get networkErrorMessage =>
+      'No connection. Check your internet and try again.';
+
+  @override
+  String get serverErrorMessage =>
+      'Balance service is unavailable. Try again later.';
+
+  @override
+  String get cardNotFoundMessage =>
+      'No balance information found for this card.';
+
+  @override
+  String get rateLimitMessage =>
+      'Service query limit reached. Wait a few minutes and try again.';
+
+  @override
+  String get invalidCardMessage =>
+      'Invalid card number. It must have exactly 13 digits.';
+
+  @override
+  String get staleBalanceNotice => 'Last known balance';
+
+  @override
+  String get stops => 'Stops';
+
+  @override
+  String get favoriteStops => 'Favorite stops';
+
+  @override
+  String get addStop => 'Add stop';
+
+  @override
+  String get noFavoriteStops => 'No saved stops';
+
+  @override
+  String get noFavoriteStopsMessage =>
+      'Save the stops you use and see the next buses here.';
+
+  @override
+  String get nearbyStops => 'Near me';
+
+  @override
+  String get stationCatalog => 'Stations';
+
+  @override
+  String get searchStation => 'Search station';
+
+  @override
+  String get noStopsNearby => 'No stops within 300 m';
+
+  @override
+  String get noBusesComing => 'No buses coming';
+
+  @override
+  String get arrivingNow => 'Now';
+
+  @override
+  String minutesShort(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String metersAway(int meters) {
+    return '$meters m';
+  }
+
+  @override
+  String get locationUnavailable => 'Turn on location to find nearby stops.';
+
+  @override
+  String get locationDeniedForever =>
+      'Enable the location permission in system settings.';
+
+  @override
+  String get couldNotLoadArrivals => 'Could not load arrivals';
+
+  @override
+  String get stopSaved => 'Stop saved';
+
+  @override
+  String get stopAlreadySaved => 'That stop is already saved';
+
+  @override
+  String get removeStop => 'Remove stop';
+
+  @override
+  String get mapTab => 'Map';
+
+  @override
+  String get searchHere => 'Search here';
+
+  @override
+  String get linesServing => 'Lines';
+
+  @override
+  String get noLinesForStop => 'No lines listed';
+
+  @override
+  String get saveAsFavorite => 'Save as favorite';
+
+  @override
+  String get saveThisArea => 'Save this area';
+
+  @override
+  String get areaName => 'Area name';
+
+  @override
+  String get mapHint => 'Move the map and search to see stops anywhere';
+
+  @override
+  String get save => 'Save';
+
+  @override
+  String get homeScreen => 'Home screen';
+
+  @override
+  String get homeScreenDesc => 'What to show when the app opens';
+
+  @override
+  String get homeCardsOnly => 'Cards only';
+
+  @override
+  String get homeStopsOnly => 'Favorite stops only';
+
+  @override
+  String get homeBoth => 'Cards and stops';
+
+  @override
+  String get myCards => 'My cards';
+
+  @override
+  String get seeAll => 'See all';
+
+  @override
+  String get editStop => 'Rename stop';
+
+  @override
+  String get customNameLabel => 'Custom name';
+
+  @override
+  String get customNameHint => 'Leave it empty to use the real name';
+
+  @override
+  String get myLocation => 'My location';
+
+  @override
+  String get stopDetails => 'Stop details';
+
+  @override
+  String get resetNorth => 'Face north';
+
+  @override
+  String get madeBy => 'by Yenreh';
+
+  @override
+  String get licenses => 'Open source licenses';
 }

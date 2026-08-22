@@ -109,5 +109,69 @@
   "createCardError": "Error al crear la tarjeta",
   "saveChangesError": "Error al guardar los cambios",
   "farePriceUpdated": "Valor del pasaje actualizado",
-  "balanceUpdated": "Saldo actualizado"
+  "balanceUpdated": "Saldo actualizado",
+  "retry": "Reintentar",
+  "networkErrorMessage": "Sin conexión. Revisa tu internet e inténtalo de nuevo.",
+  "serverErrorMessage": "El servicio de saldos no está disponible. Intenta más tarde.",
+  "cardNotFoundMessage": "No se encontró información de saldo para esta tarjeta.",
+  "rateLimitMessage": "Límite de consultas del servicio alcanzado. Espera unos minutos e inténtalo de nuevo.",
+  "invalidCardMessage": "Número de tarjeta inválido. Debe tener exactamente 13 dígitos.",
+  "staleBalanceNotice": "Último saldo conocido",
+  "stops": "Paradas",
+  "favoriteStops": "Paradas favoritas",
+  "addStop": "Agregar parada",
+  "noFavoriteStops": "Sin paradas guardadas",
+  "noFavoriteStopsMessage": "Guarda las paradas que usas y mira aquí los próximos buses.",
+  "nearbyStops": "Cerca de mí",
+  "stationCatalog": "Estaciones",
+  "searchStation": "Buscar estación",
+  "noStopsNearby": "No hay paradas a menos de 300 m",
+  "noBusesComing": "Sin buses próximos",
+  "arrivingNow": "Ya",
+  "minutesShort": "{minutes} min",
+  "@minutesShort": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "metersAway": "{meters} m",
+  "@metersAway": {
+    "placeholders": {
+      "meters": {
+        "type": "int"
+      }
+    }
+  },
+  "locationUnavailable": "Activa la ubicación para encontrar paradas cercanas.",
+  "locationDeniedForever": "Habilita el permiso de ubicación en los ajustes del sistema.",
+  "couldNotLoadArrivals": "No se pudieron cargar las llegadas",
+  "stopSaved": "Parada guardada",
+  "stopAlreadySaved": "Esa parada ya está guardada",
+  "removeStop": "Quitar parada",
+  "mapTab": "Mapa",
+  "searchHere": "Buscar aquí",
+  "linesServing": "Rutas",
+  "noLinesForStop": "Sin rutas registradas",
+  "saveAsFavorite": "Guardar como favorita",
+  "saveThisArea": "Guardar esta zona",
+  "areaName": "Nombre de la zona",
+  "mapHint": "Mueve el mapa y busca para ver paradas en cualquier lugar",
+  "save": "Guardar",
+  "homeScreen": "Pantalla de inicio",
+  "homeScreenDesc": "Qué mostrar al abrir la app",
+  "homeCardsOnly": "Solo tarjetas",
+  "homeStopsOnly": "Solo paradas favoritas",
+  "homeBoth": "Tarjetas y paradas",
+  "myCards": "Mis tarjetas",
+  "seeAll": "Ver todas",
+  "editStop": "Renombrar parada",
+  "customNameLabel": "Nombre personalizado",
+  "customNameHint": "Déjalo vacío para usar el nombre real",
+  "myLocation": "Mi ubicación",
+  "stopDetails": "Detalles de la parada",
+  "resetNorth": "Orientar al norte",
+  "madeBy": "by Yenreh",
+  "licenses": "Licencias de código abierto"
 }

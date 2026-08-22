@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 
 /// App color palette
 class AppColors {
@@ -54,7 +53,12 @@ class AppColors {
 
 /// App theme configuration
 class AppTheme {
-  static final _baseTextTheme = GoogleFonts.interTextTheme();
+  /// Inter is bundled as an asset instead of downloaded at runtime, so the
+  /// first launch does not depend on the network.
+  static const String fontFamily = 'Inter';
+
+  static final _baseTextTheme =
+      ThemeData.light().textTheme.apply(fontFamily: fontFamily);
 
   /// Light theme
   static ThemeData get lightTheme {

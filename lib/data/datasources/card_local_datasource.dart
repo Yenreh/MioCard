@@ -1,43 +1,13 @@
 import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart';
 import '../models/card_model.dart';
+import 'app_database.dart';
 
 /// Local data source using SQLite
 class CardLocalDatasource {
-  static Database? _database;
   static const String _tableName = 'cards';
 
   /// Get database instance
-  Future<Database> get database async {
-    if (_database != null) return _database!;
-    _database = await _initDatabase();
-    return _database!;
-  }
-
-  /// Initialize the database
-  Future<Database> _initDatabase() async {
-    final dbPath = await getDatabasesPath();
-    final path = join(dbPath, 'miocard.db');
-
-    return await openDatabase(
-      path,
-      version: 1,
-      onCreate: (db, version) async {
-        await db.execute('''
-          CREATE TABLE $_tableName (
-            internal_id TEXT PRIMARY KEY,
-            card_id TEXT NOT NULL,
-            prefix TEXT,
-            suffix TEXT,
-            name TEXT NOT NULL,
-            position INTEGER DEFAULT 0,
-            balance REAL,
-            last_update INTEGER
-          )
-        ''');
-      },
-    );
-  }
+  Future<Database> get database => AppDatabase.instance;
 
   /// Get all cards
   Future<List<CardModel>> getAllCards() async {

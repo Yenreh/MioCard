@@ -1,14 +1,34 @@
+import 'dart:async';
 import 'dart:convert';
-import 'package:http/http.dart' as http;
-import '../models/card_balance_response.dart';
+import 'dart:math';
 
-/// Remote data source for fetching card balance from API
+import 'package:http/http.dart' as http;
+
+import '../models/card_balance_response.dart';
+import 'api_exception.dart';
+
+export 'api_exception.dart';
+
+/// Remote data source for fetching card balance.
+///
+/// Uses two independent public sources:
+/// - Primary: the Metrocali proxy used by the official MIO app. It queries
+///   the Oracle backend server-side, so its query quota is not tied to the
+///   user's IP.
+/// - Fallback: the utryt web page endpoint. Rate limited per origin, but it
+///   reports precise business errors (invalid card, no movements).
 class CardRemoteDatasource {
-  static const String _baseUrl =
+  static const String _ctsUrl = 'https://metrocali.gov.co/cts/api/cts.php';
+  static const String _utrytUrl =
       'https://www.utryt.com.co/saldo/script/saldo.php';
 
-  static const Map<String, String> _headers = {
-    'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0',
+  static const Map<String, String> _ctsHeaders = {
+    'Accept': 'application/json',
+  };
+
+  static const Map<String, String> _utrytHeaders = {
+    'User-Agent':
+        'Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0',
     'Accept': 'text/plain, */*; q=0.01',
     'Accept-Language': 'en-US,en;q=0.5',
     'X-Requested-With': 'XMLHttpRequest',
@@ -19,99 +39,181 @@ class CardRemoteDatasource {
     'Sec-Fetch-Site': 'same-origin',
   };
 
+  static const int _maxAttempts = 3;
+  static const Duration _requestTimeout = Duration(seconds: 10);
+  static const Duration _baseBackoff = Duration(seconds: 1);
+  static const int _maxJitterMs = 500;
+
   final http.Client _client;
+  final Random _random;
+  final Duration _backoffBase;
 
-  CardRemoteDatasource({http.Client? client})
-      : _client = client ?? http.Client();
+  CardRemoteDatasource({
+    http.Client? client,
+    Random? random,
+    Duration backoffBase = _baseBackoff,
+  })  : _client = client ?? http.Client(),
+        _random = random ?? Random(),
+        _backoffBase = backoffBase;
 
-  /// Fetch card balance from the MIO API
+  /// Fetch card balance, trying the primary source first and falling back
+  /// to the secondary one when it fails.
   Future<CardBalanceResponse> getCardBalance(String cardId) async {
-    final uri = Uri.parse('$_baseUrl?card=$cardId');
-
     try {
-      final response = await _client
-          .get(uri, headers: _headers)
-          .timeout(const Duration(seconds: 20));
-
-      final body = response.body;
-      final contentType = response.headers['content-type'] ?? '';
-
-      if (response.statusCode != 200) {
-        throw ApiException(
-          message: 'Server error: ${response.statusCode}',
-          statusCode: response.statusCode,
-        );
-      }
-
-      // If the response is JSON or looks like JSON, decode it
-      if (contentType.contains('application/json') ||
-          body.trim().startsWith('{')) {
-        final jsonData = json.decode(body) as Map<String, dynamic>;
-        
-        // Check if the response is empty or missing required fields
-        if (jsonData.isEmpty || !jsonData.containsKey('balance')) {
-          throw const ApiException(
-            message: 'Error fetching card data',
-          );
+      return await _withRetries(() => _fetchFromCts(cardId));
+    } on ApiException catch (primaryError) {
+      try {
+        return await _withRetries(() => _fetchFromUtryt(cardId));
+      } on ApiException catch (fallbackError) {
+        // The primary source cannot tell an invalid card from a backend
+        // failure, so prefer the fallback when it identified the cause.
+        if (fallbackError is InvalidCardApiException ||
+            fallbackError is CardNotFoundApiException) {
+          rethrow;
         }
-        
-        return CardBalanceResponse.fromJson(jsonData);
+        throw primaryError;
       }
-
-      // Otherwise treat as text/HTML and extract the balance
-      final extractedBalance = _extractBalanceFromText(body);
-      
-      // If we couldn't extract a balance, throw an error
-      if (extractedBalance == null) {
-        throw const ApiException(
-          message: 'Error fetching card data',
-        );
-      }
-      
-      return CardBalanceResponse.fromText(
-        cardId: cardId,
-        raw: body,
-        balance: extractedBalance,
-      );
-    } on FormatException {
-      throw const ApiException(message: 'Invalid response format');
-    } on http.ClientException catch (e) {
-      throw ApiException(message: 'Client error: ${e.message}');
-    } catch (e) {
-      if (e is ApiException) rethrow;
-      throw ApiException(message: 'Network error: $e');
     }
   }
 
-  /// Attempt to extract a numeric balance value from HTML/text.
-  double? _extractBalanceFromText(String text) {
-    final cleaned = text.replaceAll(RegExp(r'\s+'), ' ').trim();
+  /// Run [request], retrying transient failures with exponential backoff.
+  Future<CardBalanceResponse> _withRetries(
+    Future<CardBalanceResponse> Function() request,
+  ) async {
+    ApiException? lastError;
 
-    // Finds patterns like 12345 or 12.345 or 12,345 etc.
-    final regex = RegExp(
-      r'(?:(?:saldo|balance)\s*[:\-]?\s*)?(\d{1,3}(?:[.,]\d{3})+|\d+)',
-      caseSensitive: false,
-    );
+    for (var attempt = 0; attempt < _maxAttempts; attempt++) {
+      if (attempt > 0) {
+        await Future<void>.delayed(_backoffFor(attempt));
+      }
+      try {
+        return await request();
+      } on ApiException catch (e) {
+        if (!e.isRetryable) rethrow;
+        lastError = e;
+      }
+    }
 
-    final match = regex.firstMatch(cleaned);
-    if (match == null) return null;
-
-    var number = match.group(1)!;
-
-    // Normalize formatting to parse as double
-    number = number.replaceAll('.', '').replaceAll(',', '.');
-
-    return double.tryParse(number);
+    throw lastError!;
   }
-}
 
-/// Exception for API errors
-class ApiException implements Exception {
-  final String message;
-  final int? statusCode;
+  Duration _backoffFor(int attempt) {
+    final multiplier = 1 << (attempt - 1);
+    final jitter = _random.nextInt(_maxJitterMs);
+    return Duration(
+      milliseconds: _backoffBase.inMilliseconds * multiplier + jitter,
+    );
+  }
 
-  const ApiException({required this.message, this.statusCode});
+  Future<http.Response> _get(Uri uri, Map<String, String> headers) async {
+    final http.Response response;
+    try {
+      response =
+          await _client.get(uri, headers: headers).timeout(_requestTimeout);
+    } on TimeoutException {
+      throw const NetworkApiException('Request timed out');
+    } on http.ClientException catch (e) {
+      throw NetworkApiException('Connection error: ${e.message}');
+    }
 
-  @override
-  String toString() => 'ApiException: $message';
+    if (response.statusCode == 429 || response.statusCode >= 500) {
+      throw ServerApiException(
+        'Server error: ${response.statusCode}',
+        statusCode: response.statusCode,
+      );
+    }
+    if (response.statusCode != 200) {
+      throw ServerApiException(
+        'Unexpected status: ${response.statusCode}',
+        statusCode: response.statusCode,
+        isRetryable: false,
+      );
+    }
+
+    return response;
+  }
+
+  /// Primary source: Metrocali proxy.
+  ///
+  /// Success: {"cardNumber": 1906051868981, "balance": 15300.0,
+  ///           "balanceDate": 1785631011000, ...}
+  /// Failure: {"error": "..."} with HTTP 200.
+  Future<CardBalanceResponse> _fetchFromCts(String cardId) async {
+    final response = await _get(
+      Uri.parse('$_ctsUrl?numero=$cardId'),
+      _ctsHeaders,
+    );
+    final payload = _decodeJsonObject(response.body);
+
+    if (payload['error'] != null) {
+      // The proxy collapses every upstream problem into one generic
+      // message, so do not retry: let the fallback identify the cause.
+      throw ServerApiException(
+        'Proxy error: ${payload['error']}',
+        isRetryable: false,
+      );
+    }
+
+    return _toResponse(payload);
+  }
+
+  /// Fallback source: utryt web page endpoint.
+  ///
+  /// Returns HTTP 200 even for errors, as an Oracle ORDS error payload.
+  Future<CardBalanceResponse> _fetchFromUtryt(String cardId) async {
+    final response = await _get(
+      Uri.parse('$_utrytUrl?card=$cardId'),
+      _utrytHeaders,
+    );
+    final payload = _decodeJsonObject(response.body);
+
+    if (payload['balance'] == null) {
+      final cause = payload['cause']?.toString() ?? '';
+      if (cause.contains('ORA-20001')) {
+        throw const InvalidCardApiException(
+          'Card number must have exactly 13 digits',
+        );
+      }
+      if (cause.contains('ORA-20002')) {
+        throw const CardNotFoundApiException(
+          'No movements found for this card',
+        );
+      }
+      // ORA-20003 wrapping ORA-20010: rate limited by origin. Retrying
+      // immediately only makes it worse; the user must wait.
+      if (cause.contains('ORA-20010')) {
+        throw const RateLimitApiException(
+          'Query limit exceeded for this origin',
+        );
+      }
+      if (payload['code'] != null) {
+        throw const ServerApiException('Service error');
+      }
+      throw const CardNotFoundApiException('Card not found');
+    }
+
+    return _toResponse(payload);
+  }
+
+  Map<String, dynamic> _decodeJsonObject(String body) {
+    try {
+      final decoded = json.decode(body);
+      if (decoded is! Map<String, dynamic>) {
+        throw const FormatException('Not a JSON object');
+      }
+      return decoded;
+    } on FormatException {
+      // HTML error page, empty body or any non-JSON payload: the service
+      // is misbehaving, retrying may help.
+      throw const ServerApiException('Unexpected response format');
+    }
+  }
+
+  CardBalanceResponse _toResponse(Map<String, dynamic> payload) {
+    final cardNumber = payload['cardNumber'];
+    if (payload['balance'] is! num || cardNumber is! num || cardNumber <= 0) {
+      throw const CardNotFoundApiException('Card not found');
+    }
+    return CardBalanceResponse.fromJson(payload);
+  }
 }

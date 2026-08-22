@@ -547,6 +547,306 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Balance updated'**
   String get balanceUpdated;
+
+  /// No description provided for @retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retry;
+
+  /// No description provided for @networkErrorMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No connection. Check your internet and try again.'**
+  String get networkErrorMessage;
+
+  /// No description provided for @serverErrorMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Balance service is unavailable. Try again later.'**
+  String get serverErrorMessage;
+
+  /// No description provided for @cardNotFoundMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No balance information found for this card.'**
+  String get cardNotFoundMessage;
+
+  /// No description provided for @rateLimitMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Service query limit reached. Wait a few minutes and try again.'**
+  String get rateLimitMessage;
+
+  /// No description provided for @invalidCardMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Invalid card number. It must have exactly 13 digits.'**
+  String get invalidCardMessage;
+
+  /// No description provided for @staleBalanceNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'Last known balance'**
+  String get staleBalanceNotice;
+
+  /// No description provided for @stops.
+  ///
+  /// In en, this message translates to:
+  /// **'Stops'**
+  String get stops;
+
+  /// No description provided for @favoriteStops.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorite stops'**
+  String get favoriteStops;
+
+  /// No description provided for @addStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Add stop'**
+  String get addStop;
+
+  /// No description provided for @noFavoriteStops.
+  ///
+  /// In en, this message translates to:
+  /// **'No saved stops'**
+  String get noFavoriteStops;
+
+  /// No description provided for @noFavoriteStopsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Save the stops you use and see the next buses here.'**
+  String get noFavoriteStopsMessage;
+
+  /// No description provided for @nearbyStops.
+  ///
+  /// In en, this message translates to:
+  /// **'Near me'**
+  String get nearbyStops;
+
+  /// No description provided for @stationCatalog.
+  ///
+  /// In en, this message translates to:
+  /// **'Stations'**
+  String get stationCatalog;
+
+  /// No description provided for @searchStation.
+  ///
+  /// In en, this message translates to:
+  /// **'Search station'**
+  String get searchStation;
+
+  /// No description provided for @noStopsNearby.
+  ///
+  /// In en, this message translates to:
+  /// **'No stops within 300 m'**
+  String get noStopsNearby;
+
+  /// No description provided for @noBusesComing.
+  ///
+  /// In en, this message translates to:
+  /// **'No buses coming'**
+  String get noBusesComing;
+
+  /// No description provided for @arrivingNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Now'**
+  String get arrivingNow;
+
+  /// No description provided for @minutesShort.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min'**
+  String minutesShort(int minutes);
+
+  /// No description provided for @metersAway.
+  ///
+  /// In en, this message translates to:
+  /// **'{meters} m'**
+  String metersAway(int meters);
+
+  /// No description provided for @locationUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on location to find nearby stops.'**
+  String get locationUnavailable;
+
+  /// No description provided for @locationDeniedForever.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable the location permission in system settings.'**
+  String get locationDeniedForever;
+
+  /// No description provided for @couldNotLoadArrivals.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load arrivals'**
+  String get couldNotLoadArrivals;
+
+  /// No description provided for @stopSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop saved'**
+  String get stopSaved;
+
+  /// No description provided for @stopAlreadySaved.
+  ///
+  /// In en, this message translates to:
+  /// **'That stop is already saved'**
+  String get stopAlreadySaved;
+
+  /// No description provided for @removeStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove stop'**
+  String get removeStop;
+
+  /// No description provided for @mapTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Map'**
+  String get mapTab;
+
+  /// No description provided for @searchHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Search here'**
+  String get searchHere;
+
+  /// No description provided for @linesServing.
+  ///
+  /// In en, this message translates to:
+  /// **'Lines'**
+  String get linesServing;
+
+  /// No description provided for @noLinesForStop.
+  ///
+  /// In en, this message translates to:
+  /// **'No lines listed'**
+  String get noLinesForStop;
+
+  /// No description provided for @saveAsFavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Save as favorite'**
+  String get saveAsFavorite;
+
+  /// No description provided for @saveThisArea.
+  ///
+  /// In en, this message translates to:
+  /// **'Save this area'**
+  String get saveThisArea;
+
+  /// No description provided for @areaName.
+  ///
+  /// In en, this message translates to:
+  /// **'Area name'**
+  String get areaName;
+
+  /// No description provided for @mapHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Move the map and search to see stops anywhere'**
+  String get mapHint;
+
+  /// No description provided for @save.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get save;
+
+  /// No description provided for @homeScreen.
+  ///
+  /// In en, this message translates to:
+  /// **'Home screen'**
+  String get homeScreen;
+
+  /// No description provided for @homeScreenDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'What to show when the app opens'**
+  String get homeScreenDesc;
+
+  /// No description provided for @homeCardsOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Cards only'**
+  String get homeCardsOnly;
+
+  /// No description provided for @homeStopsOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorite stops only'**
+  String get homeStopsOnly;
+
+  /// No description provided for @homeBoth.
+  ///
+  /// In en, this message translates to:
+  /// **'Cards and stops'**
+  String get homeBoth;
+
+  /// No description provided for @myCards.
+  ///
+  /// In en, this message translates to:
+  /// **'My cards'**
+  String get myCards;
+
+  /// No description provided for @seeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'See all'**
+  String get seeAll;
+
+  /// No description provided for @editStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename stop'**
+  String get editStop;
+
+  /// No description provided for @customNameLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom name'**
+  String get customNameLabel;
+
+  /// No description provided for @customNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Leave it empty to use the real name'**
+  String get customNameHint;
+
+  /// No description provided for @myLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'My location'**
+  String get myLocation;
+
+  /// No description provided for @stopDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop details'**
+  String get stopDetails;
+
+  /// No description provided for @resetNorth.
+  ///
+  /// In en, this message translates to:
+  /// **'Face north'**
+  String get resetNorth;
+
+  /// No description provided for @madeBy.
+  ///
+  /// In en, this message translates to:
+  /// **'by Yenreh'**
+  String get madeBy;
+
+  /// No description provided for @licenses.
+  ///
+  /// In en, this message translates to:
+  /// **'Open source licenses'**
+  String get licenses;
 }
 
 class _AppLocalizationsDelegate

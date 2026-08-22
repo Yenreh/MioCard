@@ -11,29 +11,43 @@ enum AppThemeMode {
   dark,
 }
 
+/// What the home screen shows
+enum HomeContent {
+  cards,
+  stops,
+  both,
+}
+
 /// Settings state
 class SettingsState {
   final AppThemeMode themeMode;
   final int farePrice;
+  final HomeContent homeContent;
   final bool isLoading;
 
   const SettingsState({
     this.themeMode = AppThemeMode.system,
     this.farePrice = 3200,
+    this.homeContent = HomeContent.cards,
     this.isLoading = true,
   });
 
   SettingsState copyWith({
     AppThemeMode? themeMode,
     int? farePrice,
+    HomeContent? homeContent,
     bool? isLoading,
   }) {
     return SettingsState(
       themeMode: themeMode ?? this.themeMode,
       farePrice: farePrice ?? this.farePrice,
+      homeContent: homeContent ?? this.homeContent,
       isLoading: isLoading ?? this.isLoading,
     );
   }
+
+  bool get showsCards => homeContent != HomeContent.stops;
+  bool get showsStops => homeContent != HomeContent.cards;
 
   ThemeMode get flutterThemeMode {
     switch (themeMode) {
@@ -49,12 +63,15 @@ class SettingsState {
   Map<String, dynamic> toJson() => {
         'themeMode': themeMode.index,
         'farePrice': farePrice,
+        'homeContent': homeContent.index,
       };
 
   factory SettingsState.fromJson(Map<String, dynamic> json) {
     return SettingsState(
       themeMode: AppThemeMode.values[json['themeMode'] as int? ?? 0],
       farePrice: json['farePrice'] as int? ?? 3200,
+      homeContent:
+          HomeContent.values[json['homeContent'] as int? ?? 0],
       isLoading: false,
     );
   }
@@ -109,6 +126,11 @@ class SettingsNotifier extends Notifier<SettingsState> {
       state = state.copyWith(farePrice: price);
       _saveSettings();
     }
+  }
+
+  void setHomeContent(HomeContent content) {
+    state = state.copyWith(homeContent: content);
+    _saveSettings();
   }
 
   /// Calculate how many fares the balance can cover

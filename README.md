@@ -68,11 +68,22 @@ flutter build ios
 
 ## API
 
-La aplicación se integra con:
+La aplicación consulta el saldo en dos fuentes públicas independientes.
+
+Primaria (proxy de Metrocali, el mismo que usa la app oficial):
+
+```
+GET https://metrocali.gov.co/cts/api/cts.php?numero={cardId}
+```
+
+Respaldo (endpoint de la página web de utryt, con límite de consultas por IP):
 
 ```
 GET https://www.utryt.com.co/saldo/script/saldo.php?card={cardId}
 ```
+
+Si la primaria falla se usa la de respaldo automáticamente. Ambas responden
+HTTP 200 incluso ante errores, por lo que el cuerpo se valida siempre.
 
 ## Licencia
 

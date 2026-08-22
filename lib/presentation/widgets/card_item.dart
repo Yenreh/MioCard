@@ -8,7 +8,16 @@ import '../../l10n/app_localizations.dart';
 class CardItemWidget extends StatelessWidget {
   final CardEntity card;
   final bool isRefreshing;
+  final bool refreshFailed;
   final int farePrice;
+
+  /// Shorter layout, so more cards fit when the home screen also shows
+  /// the favorite stops
+  final bool compact;
+
+  /// Edit and delete live in the cards screen; the dashboard only
+  /// refreshes
+  final bool showManageActions;
   final VoidCallback onRefreshClick;
   final VoidCallback onEditClick;
   final VoidCallback onDeleteClick;
@@ -17,7 +26,10 @@ class CardItemWidget extends StatelessWidget {
     super.key,
     required this.card,
     required this.isRefreshing,
+    this.refreshFailed = false,
     required this.farePrice,
+    this.compact = false,
+    this.showManageActions = true,
     required this.onRefreshClick,
     required this.onEditClick,
     required this.onDeleteClick,
@@ -33,6 +45,8 @@ class CardItemWidget extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final l10n = AppLocalizations.of(context)!;
+
+    if (compact) return _buildCompact(context, theme, l10n);
 
     return Container(
       constraints: const BoxConstraints(minHeight: 200),
@@ -129,19 +143,21 @@ class CardItemWidget extends StatelessWidget {
                           onPressed: onRefreshClick,
                           tooltip: l10n.updateBalance,
                         ),
-                        const SizedBox(width: 8),
-                        _CardActionButton(
-                          icon: Icons.edit_rounded,
-                          onPressed: onEditClick,
-                          tooltip: l10n.edit,
-                        ),
-                        const SizedBox(width: 8),
-                        _CardActionButton(
-                          icon: Icons.delete_rounded,
-                          onPressed: onDeleteClick,
-                          tooltip: l10n.delete,
-                          isDestructive: true,
-                        ),
+                        if (showManageActions) ...[
+                          const SizedBox(width: 8),
+                          _CardActionButton(
+                            icon: Icons.edit_rounded,
+                            onPressed: onEditClick,
+                            tooltip: l10n.edit,
+                          ),
+                          const SizedBox(width: 8),
+                          _CardActionButton(
+                            icon: Icons.delete_rounded,
+                            onPressed: onDeleteClick,
+                            tooltip: l10n.delete,
+                            isDestructive: true,
+                          ),
+                        ],
                       ],
                     ),
                   ],
@@ -247,6 +263,32 @@ class CardItemWidget extends StatelessWidget {
                   ],
                 ),
 
+                // Stale notice when the last refresh failed and we only
+                // have a previously stored balance
+                if (refreshFailed && card.balance != null) ...[
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const Icon(
+                        Icons.cloud_off_rounded,
+                        color: Color(0xFFFFD54F),
+                        size: 12,
+                      ),
+                      const SizedBox(width: 4),
+                      Flexible(
+                        child: Text(
+                          l10n.staleBalanceNotice,
+                          style: theme.textTheme.labelSmall?.copyWith(
+                            color: const Color(0xFFFFD54F),
+                            fontSize: 10,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+
                 // Last update text
                 if (card.lastUpdate != null) ...[
                   const SizedBox(height: 8),
@@ -263,6 +305,81 @@ class CardItemWidget extends StatelessWidget {
           ),
         ],
         ),
+      ),
+    );
+  }
+
+  /// Condensed card: number, name and balance on a single row
+  Widget _buildCompact(
+    BuildContext context,
+    ThemeData theme,
+    AppLocalizations l10n,
+  ) {
+    return Container(
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFF667EEA), Color(0xFF764BA2)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(14),
+      ),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  card.name.toUpperCase(),
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  _formatCardNumber(card.displayId),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: Colors.white.withAlpha(179),
+                    fontFamily: 'monospace',
+                    letterSpacing: 1,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _BalanceDisplay(balance: card.balance, compact: true),
+              if (card.balance != null && availableFares > 0)
+                Text(
+                  l10n.fares(availableFares),
+                  style: theme.textTheme.labelSmall?.copyWith(
+                    color: Colors.white70,
+                    fontSize: 10,
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(width: 8),
+          _CardActionButton(
+            icon: isRefreshing ? null : Icons.refresh_rounded,
+            isLoading: isRefreshing,
+            onPressed: onRefreshClick,
+            tooltip: l10n.updateBalance,
+          ),
+        ],
       ),
     );
   }
@@ -345,8 +462,9 @@ class _CardActionButton extends StatelessWidget {
 /// Balance display with colored text and currency formatting
 class _BalanceDisplay extends StatelessWidget {
   final double? balance;
+  final bool compact;
 
-  const _BalanceDisplay({this.balance});
+  const _BalanceDisplay({this.balance, this.compact = false});
 
   static final _currencyFormat = NumberFormat.currency(
     locale: 'es_CO',
@@ -358,10 +476,13 @@ class _BalanceDisplay extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    final baseStyle =
+        compact ? theme.textTheme.titleMedium : theme.textTheme.titleLarge;
+
     if (balance == null) {
       return Text(
         '---',
-        style: theme.textTheme.titleLarge?.copyWith(
+        style: baseStyle?.copyWith(
           color: Colors.white.withAlpha(128),
           fontWeight: FontWeight.bold,
         ),
@@ -377,7 +498,7 @@ class _BalanceDisplay extends StatelessWidget {
 
     return Text(
       _currencyFormat.format(balance),
-      style: theme.textTheme.titleLarge?.copyWith(
+      style: baseStyle?.copyWith(
         color: balanceColor,
         fontWeight: FontWeight.bold,
         letterSpacing: 1,
