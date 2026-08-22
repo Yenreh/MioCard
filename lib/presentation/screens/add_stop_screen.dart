@@ -42,16 +42,16 @@ class _AddStopScreenState extends ConsumerState<AddStopScreen> {
           ),
           bottom: TabBar(
             tabs: [
-              Tab(text: l10n.nearbyStops),
               Tab(text: l10n.mapTab),
+              Tab(text: l10n.nearbyStops),
               Tab(text: l10n.stationCatalog),
             ],
           ),
         ),
         body: TabBarView(
           children: [
-            _NearbyTab(l10n: l10n),
             const MapStopsScreen(),
+            _NearbyTab(l10n: l10n),
             _StationsTab(
               l10n: l10n,
               controller: _searchController,

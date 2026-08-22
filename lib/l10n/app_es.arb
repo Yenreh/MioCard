@@ -168,5 +168,8 @@
   "seeAll": "Ver todas",
   "editStop": "Renombrar parada",
   "customNameLabel": "Nombre personalizado",
-  "customNameHint": "Déjalo vacío para usar el nombre real"
+  "customNameHint": "Déjalo vacío para usar el nombre real",
+  "myLocation": "Mi ubicación",
+  "stopDetails": "Detalles de la parada",
+  "resetNorth": "Orientar al norte"
 }

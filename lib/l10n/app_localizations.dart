@@ -817,6 +817,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Leave it empty to use the real name'**
   String get customNameHint;
+
+  /// No description provided for @myLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'My location'**
+  String get myLocation;
+
+  /// No description provided for @stopDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop details'**
+  String get stopDetails;
+
+  /// No description provided for @resetNorth.
+  ///
+  /// In en, this message translates to:
+  /// **'Face north'**
+  String get resetNorth;
 }
 
 class _AppLocalizationsDelegate

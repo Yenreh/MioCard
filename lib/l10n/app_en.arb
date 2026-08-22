@@ -168,5 +168,8 @@
   "seeAll": "See all",
   "editStop": "Rename stop",
   "customNameLabel": "Custom name",
-  "customNameHint": "Leave it empty to use the real name"
+  "customNameHint": "Leave it empty to use the real name",
+  "myLocation": "My location",
+  "stopDetails": "Stop details",
+  "resetNorth": "Face north"
 }

@@ -26,11 +26,39 @@ class _MapStopsScreenState extends ConsumerState<MapStopsScreen> {
   final _mapController = MapController();
   MapPoint? _searched;
   String? _selectedStopId;
+  bool _mapReady = false;
+  bool _locating = false;
+  double _rotation = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _centreOnDevice();
+  }
 
   @override
   void dispose() {
     _mapController.dispose();
     super.dispose();
+  }
+
+  /// Move to where the user is, staying on Cali when that is not known
+  Future<void> _centreOnDevice() async {
+    if (_locating) return;
+    setState(() => _locating = true);
+
+    try {
+      final position = await currentDevicePosition();
+      if (!mounted || !_mapReady) return;
+      _mapController.move(
+        LatLng(position.latitude, position.longitude),
+        16,
+      );
+    } catch (_) {
+      // No location: the map stays on the city centre.
+    } finally {
+      if (mounted) setState(() => _locating = false);
+    }
   }
 
   void _searchHere() {
@@ -41,54 +69,19 @@ class _MapStopsScreenState extends ConsumerState<MapStopsScreen> {
     });
   }
 
-  Future<void> _saveArea() async {
-    final l10n = AppLocalizations.of(context)!;
-    final center = _mapController.camera.center;
-    final controller = TextEditingController();
+  /// Highlight a stop and bring the map to it
+  void _focus(NearbyStop stop) {
+    setState(() => _selectedStopId = stop.id);
+    if (!stop.hasPosition || !_mapReady) return;
 
-    final name = await showDialog<String>(
-      context: context,
-      builder: (dialogContext) => AlertDialog(
-        title: Text(l10n.saveThisArea),
-        content: TextField(
-          controller: controller,
-          autofocus: true,
-          decoration: InputDecoration(labelText: l10n.areaName),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(dialogContext).pop(),
-            child: Text(l10n.cancel),
-          ),
-          FilledButton(
-            onPressed: () =>
-                Navigator.of(dialogContext).pop(controller.text.trim()),
-            child: Text(l10n.save),
-          ),
-        ],
-      ),
+    _mapController.move(
+      LatLng(stop.latitude!, stop.longitude!),
+      _mapController.camera.zoom < 16 ? 17 : _mapController.camera.zoom,
     );
-
-    if (name == null || name.isEmpty || !mounted) return;
-
-    await ref.read(stopsProvider.notifier).addFavorite(
-          id: 'area:${center.latitude},${center.longitude}',
-          name: name,
-          anchorLatitude: center.latitude,
-          anchorLongitude: center.longitude,
-        );
-
-    if (mounted) Navigator.of(context).pop();
   }
 
-  void _select(NearbyStop stop, MapPoint point) {
-    setState(() => _selectedStopId = stop.id);
-    if (stop.hasPosition) {
-      _mapController.move(
-        LatLng(stop.latitude!, stop.longitude!),
-        _mapController.camera.zoom,
-      );
-    }
+  void _openDetails(NearbyStop stop, MapPoint point) {
+    _focus(stop);
     StopDetailsSheet.show(
       context,
       stop: stop,
@@ -114,7 +107,7 @@ class _MapStopsScreenState extends ConsumerState<MapStopsScreen> {
           width: 36,
           height: 36,
           child: GestureDetector(
-            onTap: () => _select(stop, _searched!),
+            onTap: () => _openDetails(stop, _searched!),
             child: Icon(
               Icons.directions_bus_rounded,
               size: stop.id == _selectedStopId ? 34 : 24,
@@ -143,11 +136,17 @@ class _MapStopsScreenState extends ConsumerState<MapStopsScreen> {
             children: [
               FlutterMap(
                 mapController: _mapController,
-                options: const MapOptions(
+                options: MapOptions(
                   initialCenter: MapStopsScreen._caliCenter,
                   initialZoom: 15,
                   minZoom: 11,
                   maxZoom: 18,
+                  onMapReady: () => _mapReady = true,
+                  onPositionChanged: (camera, _) {
+                    if (camera.rotation != _rotation) {
+                      setState(() => _rotation = camera.rotation);
+                    }
+                  },
                 ),
                 children: [
                   TileLayer(
@@ -181,26 +180,53 @@ class _MapStopsScreenState extends ConsumerState<MapStopsScreen> {
                   color: theme.colorScheme.primary,
                 ),
               ),
+              if (_rotation.abs() > 0.5)
+                Positioned(
+                  top: 12,
+                  right: 12,
+                  child: IconButton.filled(
+                    onPressed: () => _mapController.rotate(0),
+                    tooltip: l10n.resetNorth,
+                    icon: Transform.rotate(
+                      angle: _rotation * pi / 180,
+                      child: const Icon(Icons.navigation_rounded),
+                    ),
+                  ),
+                ),
+              // Compact and centred, so it hides as little map as
+              // possible
               Positioned(
-                left: 12,
+                left: 0,
+                right: 0,
+                bottom: 14,
+                child: Center(
+                  child: FilledButton.icon(
+                    onPressed: _searchHere,
+                    icon: const Icon(Icons.search_rounded, size: 18),
+                    label: Text(l10n.searchHere),
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 8,
+                      ),
+                      visualDensity: VisualDensity.compact,
+                    ),
+                  ),
+                ),
+              ),
+              Positioned(
                 right: 12,
                 bottom: 12,
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: FilledButton.icon(
-                        onPressed: _searchHere,
-                        icon: const Icon(Icons.search_rounded),
-                        label: Text(l10n.searchHere),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    IconButton.filledTonal(
-                      onPressed: _saveArea,
-                      tooltip: l10n.saveThisArea,
-                      icon: const Icon(Icons.star_outline_rounded),
-                    ),
-                  ],
+                child: IconButton.filledTonal(
+                  onPressed: _locating ? null : _centreOnDevice,
+                  tooltip: l10n.myLocation,
+                  icon: _locating
+                      ? const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2),
+                        )
+                      : const Icon(Icons.my_location_rounded),
                 ),
               ),
             ],

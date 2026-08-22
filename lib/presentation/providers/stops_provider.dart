@@ -328,7 +328,7 @@ class LocationUnavailableException implements Exception {
 }
 
 /// Current position, asking for permission the first time
-Future<Position> _currentPosition() async {
+Future<Position> currentDevicePosition() async {
   if (!await Geolocator.isLocationServiceEnabled()) {
     throw const LocationUnavailableException();
   }
@@ -357,7 +357,7 @@ typedef NearbyResult = ({List<NearbyStop> stops, double lat, double lon});
 
 /// Stops near the device, refreshed on demand
 final nearbyStopsProvider = FutureProvider.autoDispose<NearbyResult>((ref) async {
-  final position = await _currentPosition();
+  final position = await currentDevicePosition();
   final stops = await ref
       .read(stopsRepositoryProvider)
       .getNearbyStops(position.latitude, position.longitude);

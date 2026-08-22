@@ -402,4 +402,13 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get customNameHint => 'Leave it empty to use the real name';
+
+  @override
+  String get myLocation => 'My location';
+
+  @override
+  String get stopDetails => 'Stop details';
+
+  @override
+  String get resetNorth => 'Face north';
 }

@@ -410,4 +410,13 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get customNameHint => 'Déjalo vacío para usar el nombre real';
+
+  @override
+  String get myLocation => 'Mi ubicación';
+
+  @override
+  String get stopDetails => 'Detalles de la parada';
+
+  @override
+  String get resetNorth => 'Orientar al norte';
 }
