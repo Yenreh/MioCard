@@ -42,4 +42,8 @@ class StopsRepositoryImpl implements StopsRepository {
 
   @override
   Future<List<Station>> getStations() => _remoteDatasource.getStations();
+
+  @override
+  Future<List<StopLine>> getLinesByStop(String stopId) =>
+      _remoteDatasource.getLinesByStop(stopId);
 }

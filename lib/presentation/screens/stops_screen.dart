@@ -133,10 +133,10 @@ class _StopsScreenState extends ConsumerState<StopsScreen>
                     },
                   ),
                 ),
-      floatingActionButton: FloatingActionButton.extended(
+      floatingActionButton: FloatingActionButton(
         onPressed: () => context.push('/stops/add'),
-        icon: const Icon(Icons.add_location_alt_rounded),
-        label: Text(l10n.addStop),
+        tooltip: l10n.addStop,
+        child: const Icon(Icons.add_location_alt_rounded),
       ),
     );
   }
@@ -208,7 +208,11 @@ class _StopCard extends StatelessWidget {
             )
           else
             ...list.take(5).map(
-                  (arrival) => _ArrivalRow(arrival: arrival, l10n: l10n),
+                  (arrival) => _ArrivalRow(
+                    arrival: arrival,
+                    l10n: l10n,
+                    showStopName: stop.isArea,
+                  ),
                 ),
         ],
       ),
@@ -220,8 +224,13 @@ class _StopCard extends StatelessWidget {
 class _ArrivalRow extends StatelessWidget {
   final BusArrival arrival;
   final AppLocalizations l10n;
+  final bool showStopName;
 
-  const _ArrivalRow({required this.arrival, required this.l10n});
+  const _ArrivalRow({
+    required this.arrival,
+    required this.l10n,
+    this.showStopName = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -249,11 +258,25 @@ class _ArrivalRow extends StatelessWidget {
           ),
           const SizedBox(width: 12),
           Expanded(
-            child: Text(
-              arrival.destination,
-              style: theme.textTheme.bodyMedium,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  arrival.destination,
+                  style: theme.textTheme.bodyMedium,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                if (showStopName && arrival.stopName.isNotEmpty)
+                  Text(
+                    arrival.stopName,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: colorScheme.onSurfaceVariant,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+              ],
             ),
           ),
           const SizedBox(width: 8),

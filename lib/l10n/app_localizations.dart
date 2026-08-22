@@ -703,6 +703,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Remove stop'**
   String get removeStop;
+
+  /// No description provided for @mapTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Map'**
+  String get mapTab;
+
+  /// No description provided for @searchHere.
+  ///
+  /// In en, this message translates to:
+  /// **'Search here'**
+  String get searchHere;
+
+  /// No description provided for @linesServing.
+  ///
+  /// In en, this message translates to:
+  /// **'Lines'**
+  String get linesServing;
+
+  /// No description provided for @noLinesForStop.
+  ///
+  /// In en, this message translates to:
+  /// **'No lines listed'**
+  String get noLinesForStop;
+
+  /// No description provided for @saveAsFavorite.
+  ///
+  /// In en, this message translates to:
+  /// **'Save as favorite'**
+  String get saveAsFavorite;
+
+  /// No description provided for @saveThisArea.
+  ///
+  /// In en, this message translates to:
+  /// **'Save this area'**
+  String get saveThisArea;
+
+  /// No description provided for @areaName.
+  ///
+  /// In en, this message translates to:
+  /// **'Area name'**
+  String get areaName;
+
+  /// No description provided for @mapHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Move the map and search to see stops anywhere'**
+  String get mapHint;
+
+  /// No description provided for @save.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get save;
 }
 
 class _AppLocalizationsDelegate

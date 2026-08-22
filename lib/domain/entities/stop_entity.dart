@@ -5,11 +5,16 @@ class BusArrival {
   final DateTime arrivalTime;
   final String vehicleId;
 
+  /// Stop the bus arrives at. A station spans several platforms, so an
+  /// area favorite mixes arrivals from more than one stop.
+  final String stopName;
+
   const BusArrival({
     required this.line,
     required this.destination,
     required this.arrivalTime,
     required this.vehicleId,
+    this.stopName = '',
   });
 
   /// Minutes left until arrival, floored at zero
@@ -46,13 +51,21 @@ class FavoriteStop {
   final double anchorLongitude;
   final int position;
 
+  /// Stop to follow. When null the favorite covers an area and gathers
+  /// the arrivals of every stop around the anchor, which is what a
+  /// station with several platforms needs.
+  final String? stopId;
+
   const FavoriteStop({
     required this.id,
     required this.name,
     required this.anchorLatitude,
     required this.anchorLongitude,
     this.position = 0,
+    this.stopId,
   });
+
+  bool get isArea => stopId == null;
 
   FavoriteStop copyWith({String? name, int? position}) {
     return FavoriteStop(
@@ -61,6 +74,7 @@ class FavoriteStop {
       anchorLatitude: anchorLatitude,
       anchorLongitude: anchorLongitude,
       position: position ?? this.position,
+      stopId: stopId,
     );
   }
 }
@@ -80,4 +94,12 @@ class Station {
     required this.latitude,
     required this.longitude,
   });
+}
+
+/// A line serving a stop
+class StopLine {
+  final String shortName;
+  final String name;
+
+  const StopLine({required this.shortName, required this.name});
 }

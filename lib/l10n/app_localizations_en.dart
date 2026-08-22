@@ -345,4 +345,31 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get removeStop => 'Remove stop';
+
+  @override
+  String get mapTab => 'Map';
+
+  @override
+  String get searchHere => 'Search here';
+
+  @override
+  String get linesServing => 'Lines';
+
+  @override
+  String get noLinesForStop => 'No lines listed';
+
+  @override
+  String get saveAsFavorite => 'Save as favorite';
+
+  @override
+  String get saveThisArea => 'Save this area';
+
+  @override
+  String get areaName => 'Area name';
+
+  @override
+  String get mapHint => 'Move the map and search to see stops anywhere';
+
+  @override
+  String get save => 'Save';
 }

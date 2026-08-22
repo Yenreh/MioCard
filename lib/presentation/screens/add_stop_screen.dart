@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import '../../domain/entities/stop_entity.dart';
 import '../../l10n/app_localizations.dart';
 import '../providers/stops_provider.dart';
+import '../widgets/stop_details_sheet.dart';
+import 'map_stops_screen.dart';
 
 /// Add a favorite stop, either from nearby stops or from the station catalog
 class AddStopScreen extends ConsumerStatefulWidget {
@@ -24,8 +26,10 @@ class _AddStopScreenState extends ConsumerState<AddStopScreen> {
     super.dispose();
   }
 
-  Future<void> _save({
-    required String stopId,
+  /// Save a station as an area: it spans several platforms, and no single
+  /// stop id covers all of its arrivals.
+  Future<void> _saveArea({
+    required String id,
     required String name,
     required double latitude,
     required double longitude,
@@ -35,7 +39,7 @@ class _AddStopScreenState extends ConsumerState<AddStopScreen> {
     final notifier = ref.read(stopsProvider.notifier);
 
     final alreadySaved =
-        ref.read(stopsProvider).favorites.any((s) => s.id == stopId);
+        ref.read(stopsProvider).favorites.any((s) => s.id == id);
     if (alreadySaved) {
       messenger.showSnackBar(
         SnackBar(
@@ -47,7 +51,7 @@ class _AddStopScreenState extends ConsumerState<AddStopScreen> {
     }
 
     await notifier.addFavorite(
-      stopId: stopId,
+      id: id,
       name: name,
       anchorLatitude: latitude,
       anchorLongitude: longitude,
@@ -69,7 +73,7 @@ class _AddStopScreenState extends ConsumerState<AddStopScreen> {
     final l10n = AppLocalizations.of(context)!;
 
     return DefaultTabController(
-      length: 2,
+      length: 3,
       child: Scaffold(
         appBar: AppBar(
           title: Text(l10n.addStop),
@@ -80,19 +84,21 @@ class _AddStopScreenState extends ConsumerState<AddStopScreen> {
           bottom: TabBar(
             tabs: [
               Tab(text: l10n.nearbyStops),
+              Tab(text: l10n.mapTab),
               Tab(text: l10n.stationCatalog),
             ],
           ),
         ),
         body: TabBarView(
           children: [
-            _NearbyTab(l10n: l10n, onSave: _save),
+            _NearbyTab(l10n: l10n),
+            const MapStopsScreen(),
             _StationsTab(
               l10n: l10n,
               controller: _searchController,
               query: _query,
               onQueryChanged: (value) => setState(() => _query = value),
-              onSave: _save,
+              onSave: _saveArea,
             ),
           ],
         ),
@@ -101,8 +107,8 @@ class _AddStopScreenState extends ConsumerState<AddStopScreen> {
   }
 }
 
-typedef _SaveStop = Future<void> Function({
-  required String stopId,
+typedef _SaveArea = Future<void> Function({
+  required String id,
   required String name,
   required double latitude,
   required double longitude,
@@ -111,9 +117,8 @@ typedef _SaveStop = Future<void> Function({
 /// Stops around the device, with the buses coming to each
 class _NearbyTab extends ConsumerWidget {
   final AppLocalizations l10n;
-  final _SaveStop onSave;
 
-  const _NearbyTab({required this.l10n, required this.onSave});
+  const _NearbyTab({required this.l10n});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -155,12 +160,12 @@ class _NearbyTab extends ConsumerWidget {
                   '${l10n.metersAway(stop.distanceMeters.round())}'
                   '${stop.arrivals.isEmpty ? '' : ' · ${stop.arrivals.map((a) => a.line).toSet().take(4).join(', ')}'}',
                 ),
-                trailing: const Icon(Icons.star_outline_rounded),
-                onTap: () => onSave(
-                  stopId: stop.id,
-                  name: stop.name,
-                  latitude: result.lat,
-                  longitude: result.lon,
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () => StopDetailsSheet.show(
+                  context,
+                  stop: stop,
+                  anchorLatitude: result.lat,
+                  anchorLongitude: result.lon,
                 ),
               );
             },
@@ -177,7 +182,7 @@ class _StationsTab extends ConsumerWidget {
   final TextEditingController controller;
   final String query;
   final ValueChanged<String> onQueryChanged;
-  final _SaveStop onSave;
+  final _SaveArea onSave;
 
   const _StationsTab({
     required this.l10n,
@@ -234,7 +239,7 @@ class _StationsTab extends ConsumerWidget {
                     subtitle: Text(station.address),
                     trailing: const Icon(Icons.star_outline_rounded),
                     onTap: () => onSave(
-                      stopId: 'station-${station.id}',
+                      id: 'station-${station.id}',
                       name: station.name,
                       latitude: station.latitude,
                       longitude: station.longitude,

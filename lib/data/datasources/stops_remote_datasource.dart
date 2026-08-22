@@ -12,6 +12,8 @@ class StopsRemoteDatasource {
       'https://servicios.siur.com.co/buscarutas/api/paradas_con_buses_proximos_a_llegar.php';
   static const String _stationsUrl =
       'https://wsmio.siur.com.co:8083/apiMIO/jaxrs/stations';
+  static const String _linesByStopUrl =
+      'https://wsmio.siur.com.co:8083/apiMIO/jaxrs/linesByStop';
 
   /// The arrivals service rejects anything above this radius.
   static const int maxRadiusMeters = 300;
@@ -55,14 +57,24 @@ class StopsRemoteDatasource {
         .toList(growable: false);
   }
 
-  /// Upcoming buses for a single stop, queried around its saved anchor.
+  /// Upcoming buses for a saved favorite, queried around its anchor.
+  ///
+  /// An area favorite gathers every stop around the anchor, which is how
+  /// a station with several platforms reports all of its arrivals.
   Future<List<BusArrival>> getArrivalsForStop(FavoriteStop stop) async {
     final stops = await getNearbyStops(
       latitude: stop.anchorLatitude,
       longitude: stop.anchorLongitude,
     );
+
+    if (stop.isArea) {
+      final arrivals = stops.expand((s) => s.arrivals).toList()
+        ..sort((a, b) => a.arrivalTime.compareTo(b.arrivalTime));
+      return arrivals;
+    }
+
     for (final nearby in stops) {
-      if (nearby.id == stop.id) return nearby.arrivals;
+      if (nearby.id == stop.stopId) return nearby.arrivals;
     }
     // The stop is reachable but has no buses coming right now.
     return const [];
@@ -91,11 +103,32 @@ class StopsRemoteDatasource {
         .toList(growable: false);
   }
 
+  /// Lines serving a stop, useful when no bus is on its way
+  Future<List<StopLine>> getLinesByStop(String stopId) async {
+    final decoded = await _getJson(Uri.parse('$_linesByStopUrl/$stopId'));
+
+    if (decoded is! List) {
+      throw const ServerApiException('Unexpected lines response');
+    }
+
+    return decoded
+        .whereType<Map<String, dynamic>>()
+        .map(
+          (l) => StopLine(
+            shortName: l['shortName']?.toString() ?? '',
+            name: l['name']?.toString() ?? '',
+          ),
+        )
+        .where((l) => l.shortName.isNotEmpty)
+        .toList(growable: false);
+  }
+
   NearbyStop _parseStop(Map<String, dynamic> json) {
     final buses = json['buses'];
+    final stopName = json['nombreParada']?.toString() ?? '';
     return NearbyStop(
       id: json['idParada']?.toString() ?? '',
-      name: json['nombreParada']?.toString() ?? '',
+      name: stopName,
       distanceMeters: (json['distanciaMetros'] as num?)?.toDouble() ?? 0,
       arrivals: buses is List
           ? buses
@@ -109,6 +142,7 @@ class StopsRemoteDatasource {
                     (b['tiempoEstimadoDeSalida'] as num).toInt(),
                   ),
                   vehicleId: b['vehiculoId']?.toString() ?? '',
+                  stopName: stopName,
                 ),
               )
               .toList(growable: false)

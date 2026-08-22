@@ -352,4 +352,32 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get removeStop => 'Quitar parada';
+
+  @override
+  String get mapTab => 'Mapa';
+
+  @override
+  String get searchHere => 'Buscar aquí';
+
+  @override
+  String get linesServing => 'Rutas';
+
+  @override
+  String get noLinesForStop => 'Sin rutas registradas';
+
+  @override
+  String get saveAsFavorite => 'Guardar como favorita';
+
+  @override
+  String get saveThisArea => 'Guardar esta zona';
+
+  @override
+  String get areaName => 'Nombre de la zona';
+
+  @override
+  String get mapHint =>
+      'Mueve el mapa y busca para ver paradas en cualquier lugar';
+
+  @override
+  String get save => 'Guardar';
 }

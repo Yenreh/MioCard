@@ -80,6 +80,7 @@ void main() {
       final arrivals = await _datasource(client).getArrivalsForStop(
         const FavoriteStop(
           id: '500751',
+          stopId: '500751',
           name: 'La Ermita A2',
           anchorLatitude: 3.4516,
           anchorLongitude: -76.532,
@@ -95,6 +96,7 @@ void main() {
       final arrivals = await _datasource(client).getArrivalsForStop(
         const FavoriteStop(
           id: '999999',
+          stopId: '999999',
           name: 'Unknown',
           anchorLatitude: 3.4516,
           anchorLongitude: -76.532,
@@ -102,6 +104,43 @@ void main() {
       );
 
       expect(arrivals, isEmpty);
+    });
+
+    test('an area favorite gathers every stop around the anchor', () async {
+      // A station spans several platforms, none of which matches a single
+      // stop id, so the favorite covers the area instead.
+      final client = MockClient((_) async => http.Response(_arrivalsBody, 200));
+
+      final arrivals = await _datasource(client).getArrivalsForStop(
+        const FavoriteStop(
+          id: 'station-1',
+          name: 'Estación',
+          anchorLatitude: 3.4516,
+          anchorLongitude: -76.532,
+        ),
+      );
+
+      expect(arrivals, hasLength(2));
+      expect(arrivals.first.stopName, 'Plaza de Cayzedo A1');
+      expect(
+        arrivals.first.arrivalTime.isBefore(arrivals.last.arrivalTime),
+        isTrue,
+      );
+    });
+
+    test('parses the lines serving a stop', () async {
+      final client = MockClient((request) async {
+        expect(request.url.path, endsWith('/linesByStop/512081'));
+        return http.Response(
+          '[{"lineId":282,"shortName":"P82","name":"TERMINAL CALIPSO"}]',
+          200,
+        );
+      });
+
+      final lines = await _datasource(client).getLinesByStop('512081');
+
+      expect(lines, hasLength(1));
+      expect(lines.first.shortName, 'P82');
     });
 
     test('retries transient failures once', () async {

@@ -149,5 +149,14 @@
   "couldNotLoadArrivals": "No se pudieron cargar las llegadas",
   "stopSaved": "Parada guardada",
   "stopAlreadySaved": "Esa parada ya está guardada",
-  "removeStop": "Quitar parada"
+  "removeStop": "Quitar parada",
+  "mapTab": "Mapa",
+  "searchHere": "Buscar aquí",
+  "linesServing": "Rutas",
+  "noLinesForStop": "Sin rutas registradas",
+  "saveAsFavorite": "Guardar como favorita",
+  "saveThisArea": "Guardar esta zona",
+  "areaName": "Nombre de la zona",
+  "mapHint": "Mueve el mapa y busca para ver paradas en cualquier lugar",
+  "save": "Guardar"
 }

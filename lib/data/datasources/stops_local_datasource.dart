@@ -47,6 +47,7 @@ class StopsLocalDatasource {
       anchorLatitude: (row['anchor_latitude'] as num).toDouble(),
       anchorLongitude: (row['anchor_longitude'] as num).toDouble(),
       position: (row['position'] as num?)?.toInt() ?? 0,
+      stopId: row['stop_ref'] as String?,
     );
   }
 
@@ -57,6 +58,7 @@ class StopsLocalDatasource {
       'anchor_latitude': stop.anchorLatitude,
       'anchor_longitude': stop.anchorLongitude,
       'position': stop.position,
+      'stop_ref': stop.stopId,
     };
   }
 }

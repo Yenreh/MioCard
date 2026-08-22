@@ -3,7 +3,7 @@ import 'package:sqflite/sqflite.dart';
 
 /// Single SQLite database shared by every local data source.
 class AppDatabase {
-  static const int _version = 2;
+  static const int _version = 3;
   static Database? _database;
 
   static Future<Database> get instance async {
@@ -22,6 +22,7 @@ class AppDatabase {
       },
       onUpgrade: (db, oldVersion, newVersion) async {
         if (oldVersion < 2) await _createFavoriteStops(db);
+        if (oldVersion < 3) await _addStopRef(db);
       },
     );
   }
@@ -48,8 +49,20 @@ class AppDatabase {
         name TEXT NOT NULL,
         anchor_latitude REAL NOT NULL,
         anchor_longitude REAL NOT NULL,
-        position INTEGER DEFAULT 0
+        position INTEGER DEFAULT 0,
+        stop_ref TEXT
       )
     ''');
+  }
+
+  /// Favorites used to always track a single stop id. Stations span
+  /// several platforms and never matched one, so they become area
+  /// favorites: stop_ref stays null and every nearby stop is gathered.
+  static Future<void> _addStopRef(Database db) async {
+    await db.execute('ALTER TABLE favorite_stops ADD COLUMN stop_ref TEXT');
+    await db.execute(
+      "UPDATE favorite_stops SET stop_ref = stop_id "
+      "WHERE stop_id NOT LIKE 'station-%' AND stop_id NOT LIKE 'area:%'",
+    );
   }
 }

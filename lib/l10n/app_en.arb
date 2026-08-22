@@ -149,5 +149,14 @@
   "couldNotLoadArrivals": "Could not load arrivals",
   "stopSaved": "Stop saved",
   "stopAlreadySaved": "That stop is already saved",
-  "removeStop": "Remove stop"
+  "removeStop": "Remove stop",
+  "mapTab": "Map",
+  "searchHere": "Search here",
+  "linesServing": "Lines",
+  "noLinesForStop": "No lines listed",
+  "saveAsFavorite": "Save as favorite",
+  "saveThisArea": "Save this area",
+  "areaName": "Area name",
+  "mapHint": "Move the map and search to see stops anywhere",
+  "save": "Save"
 }

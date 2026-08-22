@@ -22,4 +22,7 @@ abstract class StopsRepository {
 
   /// MIO station catalog
   Future<List<Station>> getStations();
+
+  /// Lines serving a stop
+  Future<List<StopLine>> getLinesByStop(String stopId);
 }

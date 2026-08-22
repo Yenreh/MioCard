@@ -117,21 +117,23 @@ class StopsNotifier extends Notifier<StopsState> {
     );
   }
 
-  /// Save a stop found nearby, anchored to the position it was seen from
+  /// Save a stop, or an area when [stopId] is null
   Future<void> addFavorite({
-    required String stopId,
+    required String id,
     required String name,
     required double anchorLatitude,
     required double anchorLongitude,
+    String? stopId,
   }) async {
     final position = await _repository.nextPosition();
     await _repository.addFavorite(
       FavoriteStop(
-        id: stopId,
+        id: id,
         name: name,
         anchorLatitude: anchorLatitude,
         anchorLongitude: anchorLongitude,
         position: position,
+        stopId: stopId,
       ),
     );
     await loadFavorites();
@@ -218,4 +220,24 @@ final nearbyStopsProvider = FutureProvider.autoDispose<NearbyResult>((ref) async
 /// MIO station catalog, used to add favorites without GPS
 final stationsProvider = FutureProvider<List<Station>>((ref) async {
   return ref.read(stopsRepositoryProvider).getStations();
+});
+
+/// A point to look up stops around
+typedef MapPoint = ({double latitude, double longitude});
+
+/// Stops around an arbitrary point, so any place can be inspected
+/// without saving it first
+final stopsAtPointProvider =
+    FutureProvider.autoDispose.family<List<NearbyStop>, MapPoint>(
+  (ref, point) async {
+    return ref
+        .read(stopsRepositoryProvider)
+        .getNearbyStops(point.latitude, point.longitude);
+  },
+);
+
+/// Lines serving a stop
+final linesByStopProvider =
+    FutureProvider.autoDispose.family<List<StopLine>, String>((ref, stopId) {
+  return ref.read(stopsRepositoryProvider).getLinesByStop(stopId);
 });
