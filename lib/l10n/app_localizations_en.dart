@@ -282,4 +282,67 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get staleBalanceNotice => 'Last known balance';
+
+  @override
+  String get stops => 'Stops';
+
+  @override
+  String get favoriteStops => 'Favorite stops';
+
+  @override
+  String get addStop => 'Add stop';
+
+  @override
+  String get noFavoriteStops => 'No saved stops';
+
+  @override
+  String get noFavoriteStopsMessage =>
+      'Save the stops you use and see the next buses here.';
+
+  @override
+  String get nearbyStops => 'Near me';
+
+  @override
+  String get stationCatalog => 'Stations';
+
+  @override
+  String get searchStation => 'Search station';
+
+  @override
+  String get noStopsNearby => 'No stops within 300 m';
+
+  @override
+  String get noBusesComing => 'No buses coming';
+
+  @override
+  String get arrivingNow => 'Now';
+
+  @override
+  String minutesShort(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String metersAway(int meters) {
+    return '$meters m';
+  }
+
+  @override
+  String get locationUnavailable => 'Turn on location to find nearby stops.';
+
+  @override
+  String get locationDeniedForever =>
+      'Enable the location permission in system settings.';
+
+  @override
+  String get couldNotLoadArrivals => 'Could not load arrivals';
+
+  @override
+  String get stopSaved => 'Stop saved';
+
+  @override
+  String get stopAlreadySaved => 'That stop is already saved';
+
+  @override
+  String get removeStop => 'Remove stop';
 }

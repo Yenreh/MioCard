@@ -589,6 +589,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Last known balance'**
   String get staleBalanceNotice;
+
+  /// No description provided for @stops.
+  ///
+  /// In en, this message translates to:
+  /// **'Stops'**
+  String get stops;
+
+  /// No description provided for @favoriteStops.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorite stops'**
+  String get favoriteStops;
+
+  /// No description provided for @addStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Add stop'**
+  String get addStop;
+
+  /// No description provided for @noFavoriteStops.
+  ///
+  /// In en, this message translates to:
+  /// **'No saved stops'**
+  String get noFavoriteStops;
+
+  /// No description provided for @noFavoriteStopsMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Save the stops you use and see the next buses here.'**
+  String get noFavoriteStopsMessage;
+
+  /// No description provided for @nearbyStops.
+  ///
+  /// In en, this message translates to:
+  /// **'Near me'**
+  String get nearbyStops;
+
+  /// No description provided for @stationCatalog.
+  ///
+  /// In en, this message translates to:
+  /// **'Stations'**
+  String get stationCatalog;
+
+  /// No description provided for @searchStation.
+  ///
+  /// In en, this message translates to:
+  /// **'Search station'**
+  String get searchStation;
+
+  /// No description provided for @noStopsNearby.
+  ///
+  /// In en, this message translates to:
+  /// **'No stops within 300 m'**
+  String get noStopsNearby;
+
+  /// No description provided for @noBusesComing.
+  ///
+  /// In en, this message translates to:
+  /// **'No buses coming'**
+  String get noBusesComing;
+
+  /// No description provided for @arrivingNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Now'**
+  String get arrivingNow;
+
+  /// No description provided for @minutesShort.
+  ///
+  /// In en, this message translates to:
+  /// **'{minutes} min'**
+  String minutesShort(int minutes);
+
+  /// No description provided for @metersAway.
+  ///
+  /// In en, this message translates to:
+  /// **'{meters} m'**
+  String metersAway(int meters);
+
+  /// No description provided for @locationUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Turn on location to find nearby stops.'**
+  String get locationUnavailable;
+
+  /// No description provided for @locationDeniedForever.
+  ///
+  /// In en, this message translates to:
+  /// **'Enable the location permission in system settings.'**
+  String get locationDeniedForever;
+
+  /// No description provided for @couldNotLoadArrivals.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load arrivals'**
+  String get couldNotLoadArrivals;
+
+  /// No description provided for @stopSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop saved'**
+  String get stopSaved;
+
+  /// No description provided for @stopAlreadySaved.
+  ///
+  /// In en, this message translates to:
+  /// **'That stop is already saved'**
+  String get stopAlreadySaved;
+
+  /// No description provided for @removeStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove stop'**
+  String get removeStop;
 }
 
 class _AppLocalizationsDelegate

@@ -112,22 +112,44 @@ class MainScreen extends ConsumerWidget {
                         ),
                       ],
                     ),
-                    // Settings button
-                    GestureDetector(
-                      onTap: () => context.push('/settings'),
-                      child: Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          gradient: AppColors.primaryGradient,
-                          borderRadius: BorderRadius.circular(12),
+                    // Stops and settings buttons
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        GestureDetector(
+                          onTap: () => context.push('/stops'),
+                          child: Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              color: colorScheme.surfaceContainerHighest,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: Icon(
+                              Icons.signpost_rounded,
+                              color: colorScheme.onSurfaceVariant,
+                              size: 24,
+                            ),
+                          ),
                         ),
-                        child: const Icon(
-                          Icons.settings_rounded,
-                          color: Colors.white,
-                          size: 24,
+                        const SizedBox(width: 12),
+                        GestureDetector(
+                          onTap: () => context.push('/settings'),
+                          child: Container(
+                            width: 48,
+                            height: 48,
+                            decoration: BoxDecoration(
+                              gradient: AppColors.primaryGradient,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            child: const Icon(
+                              Icons.settings_rounded,
+                              color: Colors.white,
+                              size: 24,
+                            ),
+                          ),
                         ),
-                      ),
+                      ],
                     ),
                   ],
                 ),

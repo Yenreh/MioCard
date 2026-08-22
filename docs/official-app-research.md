@@ -78,6 +78,55 @@ bounded repetitions; use the Python snippet for context dumps.
 | Buses near a stop | `https://servicios.siur.com.co/buscarutas/api/paradas_con_buses_proximos_a_llegar.php?latitud=` |
 | PQRSD | `https://www.metrocali.gov.co/pqrsf/api/MOV_prepare.php` |
 
+## 4b. The jaxrs API describes itself
+
+`wsmio.siur.com.co:8083` runs Jersey and serves its own WADL, which lists
+every resource without any guessing:
+
+```bash
+curl -sS 'https://wsmio.siur.com.co:8083/apiMIO/jaxrs/application.wadl?detail=true'
+```
+
+Resources that answered with data:
+
+| Resource | Returns |
+| --- | --- |
+| `balance/{card}` | `{cardNumber, balance, pendingBalance}` |
+| `balance2/{card}` | the same payload `cts.php` proxies |
+| `stations` | every station with id, name, address, lat/lon |
+| `lines` | every line with id and short name |
+| `linesByStop/{stop}` | lines serving a stop |
+| `linesOperation` | first and last service time per line |
+| `pevrs/{lat}/{lon}/{rad}` | recharge points near a position |
+
+`stops/{lat}/{lon}/{rad}`, `linestops/{line}`, `operations/{line}` and
+`busInfo/{bus}` answered `[]` for every argument tried.
+
+## 4c. Arrivals contract
+
+```
+GET https://servicios.siur.com.co/buscarutas/api/paradas_con_buses_proximos_a_llegar.php
+    ?latitud={lat}&longitud={lon}&radio={metres}
+```
+
+`radio` is required and must be 300 or less. The response is an array of
+stops, each with the buses on their way:
+
+```json
+[{"idParada":"500800","nombreParada":"Plaza de Cayzedo A1",
+  "distanciaMetros":119.52,
+  "buses":[{"nombreLinea":"E21","nombreDestino":"Est. Universidades",
+            "tiempoEstimadoDeSalida":1787429222000,"vehiculoId":"637001"}]}]
+```
+
+`tiempoEstimadoDeSalida` is epoch milliseconds. Errors come back as
+`{"error": "..."}` with HTTP 200.
+
+The service only accepts coordinates, never a stop id, and it does not
+return the coordinates of the stops it finds. MIOCard therefore stores,
+for every favorite, the position it was found from and queries a small
+radius around that anchor.
+
 ## 5. Balance endpoint contract
 
 Success (HTTP 200):

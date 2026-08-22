@@ -1,0 +1,221 @@
+import 'dart:async';
+
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:geolocator/geolocator.dart';
+
+import '../../data/datasources/api_exception.dart';
+import '../../data/repositories/stops_repository_impl.dart';
+import '../../domain/entities/stop_entity.dart';
+import '../../domain/repositories/stops_repository.dart';
+
+/// Provider for the stops repository
+final stopsRepositoryProvider = Provider<StopsRepository>((ref) {
+  return StopsRepositoryImpl();
+});
+
+/// State for the favorite stops dashboard
+class StopsState {
+  final List<FavoriteStop> favorites;
+  final Map<String, List<BusArrival>> arrivals;
+  final bool isLoading;
+  final bool isRefreshing;
+  final ApiException? error;
+  final DateTime? lastUpdated;
+
+  const StopsState({
+    this.favorites = const [],
+    this.arrivals = const {},
+    this.isLoading = false,
+    this.isRefreshing = false,
+    this.error,
+    this.lastUpdated,
+  });
+
+  StopsState copyWith({
+    List<FavoriteStop>? favorites,
+    Map<String, List<BusArrival>>? arrivals,
+    bool? isLoading,
+    bool? isRefreshing,
+    ApiException? error,
+    DateTime? lastUpdated,
+    bool clearError = false,
+  }) {
+    return StopsState(
+      favorites: favorites ?? this.favorites,
+      arrivals: arrivals ?? this.arrivals,
+      isLoading: isLoading ?? this.isLoading,
+      isRefreshing: isRefreshing ?? this.isRefreshing,
+      error: clearError ? null : (error ?? this.error),
+      lastUpdated: lastUpdated ?? this.lastUpdated,
+    );
+  }
+}
+
+/// Favorite stops and their upcoming buses
+class StopsNotifier extends Notifier<StopsState> {
+  /// The arrivals service takes one request per stop, so keep a few in
+  /// flight at a time instead of firing all of them at once.
+  static const int _maxConcurrentRequests = 4;
+  static const Duration autoRefreshInterval = Duration(seconds: 30);
+
+  Timer? _timer;
+
+  StopsRepository get _repository => ref.read(stopsRepositoryProvider);
+
+  @override
+  StopsState build() {
+    ref.onDispose(stopAutoRefresh);
+    Future.microtask(loadFavorites);
+    return const StopsState(isLoading: true);
+  }
+
+  /// Load saved stops and their arrivals
+  Future<void> loadFavorites() async {
+    state = state.copyWith(isLoading: true, clearError: true);
+    try {
+      final favorites = await _repository.getFavorites();
+      state = state.copyWith(favorites: favorites, isLoading: false);
+      if (favorites.isNotEmpty) await refreshArrivals();
+    } on ApiException catch (e) {
+      state = state.copyWith(error: e, isLoading: false);
+    } catch (e) {
+      state = state.copyWith(
+        error: ApiException(e.toString()),
+        isLoading: false,
+      );
+    }
+  }
+
+  /// Refresh the arrivals of every saved stop
+  Future<void> refreshArrivals() async {
+    if (state.isRefreshing || state.favorites.isEmpty) return;
+
+    state = state.copyWith(isRefreshing: true, clearError: true);
+
+    final results = Map<String, List<BusArrival>>.from(state.arrivals);
+    ApiException? failure;
+
+    for (var i = 0; i < state.favorites.length; i += _maxConcurrentRequests) {
+      final batch = state.favorites.skip(i).take(_maxConcurrentRequests);
+      await Future.wait(
+        batch.map((stop) async {
+          try {
+            results[stop.id] = await _repository.getArrivals(stop);
+          } on ApiException catch (e) {
+            failure ??= e;
+          }
+        }),
+      );
+    }
+
+    state = state.copyWith(
+      arrivals: results,
+      isRefreshing: false,
+      error: failure,
+      lastUpdated: DateTime.now(),
+      clearError: failure == null,
+    );
+  }
+
+  /// Save a stop found nearby, anchored to the position it was seen from
+  Future<void> addFavorite({
+    required String stopId,
+    required String name,
+    required double anchorLatitude,
+    required double anchorLongitude,
+  }) async {
+    final position = await _repository.nextPosition();
+    await _repository.addFavorite(
+      FavoriteStop(
+        id: stopId,
+        name: name,
+        anchorLatitude: anchorLatitude,
+        anchorLongitude: anchorLongitude,
+        position: position,
+      ),
+    );
+    await loadFavorites();
+  }
+
+  /// Remove a saved stop
+  Future<void> removeFavorite(String stopId) async {
+    await _repository.removeFavorite(stopId);
+    final arrivals = Map<String, List<BusArrival>>.from(state.arrivals)
+      ..remove(stopId);
+    state = state.copyWith(
+      favorites: state.favorites.where((s) => s.id != stopId).toList(),
+      arrivals: arrivals,
+    );
+  }
+
+  /// Refresh arrivals periodically while the dashboard is on screen
+  void startAutoRefresh() {
+    _timer?.cancel();
+    _timer = Timer.periodic(autoRefreshInterval, (_) => refreshArrivals());
+  }
+
+  void stopAutoRefresh() {
+    _timer?.cancel();
+    _timer = null;
+  }
+
+  void clearError() => state = state.copyWith(clearError: true);
+}
+
+/// Provider for the favorite stops dashboard
+final stopsProvider = NotifierProvider<StopsNotifier, StopsState>(() {
+  return StopsNotifier();
+});
+
+/// Raised when the device location cannot be read
+class LocationUnavailableException implements Exception {
+  final bool permanentlyDenied;
+
+  const LocationUnavailableException({this.permanentlyDenied = false});
+}
+
+/// Current position, asking for permission the first time
+Future<Position> _currentPosition() async {
+  if (!await Geolocator.isLocationServiceEnabled()) {
+    throw const LocationUnavailableException();
+  }
+
+  var permission = await Geolocator.checkPermission();
+  if (permission == LocationPermission.denied) {
+    permission = await Geolocator.requestPermission();
+  }
+  if (permission == LocationPermission.deniedForever) {
+    throw const LocationUnavailableException(permanentlyDenied: true);
+  }
+  if (permission == LocationPermission.denied) {
+    throw const LocationUnavailableException();
+  }
+
+  return Geolocator.getCurrentPosition(
+    locationSettings: const LocationSettings(
+      accuracy: LocationAccuracy.high,
+      timeLimit: Duration(seconds: 15),
+    ),
+  );
+}
+
+/// Stops around the user, with the position they were found from
+typedef NearbyResult = ({List<NearbyStop> stops, double lat, double lon});
+
+/// Stops near the device, refreshed on demand
+final nearbyStopsProvider = FutureProvider.autoDispose<NearbyResult>((ref) async {
+  final position = await _currentPosition();
+  final stops = await ref
+      .read(stopsRepositoryProvider)
+      .getNearbyStops(position.latitude, position.longitude);
+  return (
+    stops: stops,
+    lat: position.latitude,
+    lon: position.longitude,
+  );
+});
+
+/// MIO station catalog, used to add favorites without GPS
+final stationsProvider = FutureProvider<List<Station>>((ref) async {
+  return ref.read(stopsRepositoryProvider).getStations();
+});

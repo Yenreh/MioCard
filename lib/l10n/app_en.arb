@@ -116,5 +116,38 @@
   "cardNotFoundMessage": "No balance information found for this card.",
   "rateLimitMessage": "Service query limit reached. Wait a few minutes and try again.",
   "invalidCardMessage": "Invalid card number. It must have exactly 13 digits.",
-  "staleBalanceNotice": "Last known balance"
+  "staleBalanceNotice": "Last known balance",
+  "stops": "Stops",
+  "favoriteStops": "Favorite stops",
+  "addStop": "Add stop",
+  "noFavoriteStops": "No saved stops",
+  "noFavoriteStopsMessage": "Save the stops you use and see the next buses here.",
+  "nearbyStops": "Near me",
+  "stationCatalog": "Stations",
+  "searchStation": "Search station",
+  "noStopsNearby": "No stops within 300 m",
+  "noBusesComing": "No buses coming",
+  "arrivingNow": "Now",
+  "minutesShort": "{minutes} min",
+  "@minutesShort": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "metersAway": "{meters} m",
+  "@metersAway": {
+    "placeholders": {
+      "meters": {
+        "type": "int"
+      }
+    }
+  },
+  "locationUnavailable": "Turn on location to find nearby stops.",
+  "locationDeniedForever": "Enable the location permission in system settings.",
+  "couldNotLoadArrivals": "Could not load arrivals",
+  "stopSaved": "Stop saved",
+  "stopAlreadySaved": "That stop is already saved",
+  "removeStop": "Remove stop"
 }

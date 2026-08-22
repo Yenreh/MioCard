@@ -288,4 +288,68 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get staleBalanceNotice => 'Último saldo conocido';
+
+  @override
+  String get stops => 'Paradas';
+
+  @override
+  String get favoriteStops => 'Paradas favoritas';
+
+  @override
+  String get addStop => 'Agregar parada';
+
+  @override
+  String get noFavoriteStops => 'Sin paradas guardadas';
+
+  @override
+  String get noFavoriteStopsMessage =>
+      'Guarda las paradas que usas y mira aquí los próximos buses.';
+
+  @override
+  String get nearbyStops => 'Cerca de mí';
+
+  @override
+  String get stationCatalog => 'Estaciones';
+
+  @override
+  String get searchStation => 'Buscar estación';
+
+  @override
+  String get noStopsNearby => 'No hay paradas a menos de 300 m';
+
+  @override
+  String get noBusesComing => 'Sin buses próximos';
+
+  @override
+  String get arrivingNow => 'Ya';
+
+  @override
+  String minutesShort(int minutes) {
+    return '$minutes min';
+  }
+
+  @override
+  String metersAway(int meters) {
+    return '$meters m';
+  }
+
+  @override
+  String get locationUnavailable =>
+      'Activa la ubicación para encontrar paradas cercanas.';
+
+  @override
+  String get locationDeniedForever =>
+      'Habilita el permiso de ubicación en los ajustes del sistema.';
+
+  @override
+  String get couldNotLoadArrivals => 'No se pudieron cargar las llegadas';
+
+  @override
+  String get stopSaved => 'Parada guardada';
+
+  @override
+  String get stopAlreadySaved => 'Esa parada ya está guardada';
+
+  @override
+  String get removeStop => 'Quitar parada';
 }

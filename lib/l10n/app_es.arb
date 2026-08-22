@@ -116,5 +116,38 @@
   "cardNotFoundMessage": "No se encontró información de saldo para esta tarjeta.",
   "rateLimitMessage": "Límite de consultas del servicio alcanzado. Espera unos minutos e inténtalo de nuevo.",
   "invalidCardMessage": "Número de tarjeta inválido. Debe tener exactamente 13 dígitos.",
-  "staleBalanceNotice": "Último saldo conocido"
+  "staleBalanceNotice": "Último saldo conocido",
+  "stops": "Paradas",
+  "favoriteStops": "Paradas favoritas",
+  "addStop": "Agregar parada",
+  "noFavoriteStops": "Sin paradas guardadas",
+  "noFavoriteStopsMessage": "Guarda las paradas que usas y mira aquí los próximos buses.",
+  "nearbyStops": "Cerca de mí",
+  "stationCatalog": "Estaciones",
+  "searchStation": "Buscar estación",
+  "noStopsNearby": "No hay paradas a menos de 300 m",
+  "noBusesComing": "Sin buses próximos",
+  "arrivingNow": "Ya",
+  "minutesShort": "{minutes} min",
+  "@minutesShort": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "metersAway": "{meters} m",
+  "@metersAway": {
+    "placeholders": {
+      "meters": {
+        "type": "int"
+      }
+    }
+  },
+  "locationUnavailable": "Activa la ubicación para encontrar paradas cercanas.",
+  "locationDeniedForever": "Habilita el permiso de ubicación en los ajustes del sistema.",
+  "couldNotLoadArrivals": "No se pudieron cargar las llegadas",
+  "stopSaved": "Parada guardada",
+  "stopAlreadySaved": "Esa parada ya está guardada",
+  "removeStop": "Quitar parada"
 }
